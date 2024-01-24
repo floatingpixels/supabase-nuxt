@@ -65,10 +65,14 @@ export default defineNuxtModule<ModuleOptions>({
       addPlugin(resolve('./runtime/plugins/auth-redirect'))
     }
 
-    // Add supabase to the server context
     nuxt.hook('nitro:config', nitroConfig => {
+      // Add supabase to the server context
       nitroConfig.alias = nitroConfig.alias || {}
       nitroConfig.alias['#supabase/server'] = resolve('./runtime/server/services')
+      // Inline module runtime in Nitro bundle
+      nitroConfig.externals = defu(typeof nitroConfig.externals === 'object' ? nitroConfig.externals : {}, {
+        inline: [resolve('./runtime')],
+      })
     })
 
     // Add types
