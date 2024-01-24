@@ -87,5 +87,14 @@ export default defineNuxtModule<ModuleOptions>({
           '}',
         ].join('\n'),
     })
+
+    nuxt.hook('prepare:types', options => {
+      options.references.push({ path: resolve(nuxt.options.buildDir, 'types/supabase.d.ts') })
+    })
+
+    // Transpile websocket only for non dev environments (except cloudflare)
+    if (!nuxt.options.dev && !['cloudflare'].includes(process.env.NITRO_PRESET as string)) {
+      nuxt.options.build.transpile.push('websocket')
+    }
   },
 })
