@@ -2,9 +2,21 @@
   "name": "supabase-nuxt",
   "version": "0.0.1",
   "description": "Nuxt module for Supabase",
-  "repository": "@floatingpoint/supabase-nuxt",
+  "repository": "@floatingpixels/supabase-nuxt",
   "license": "MIT",
   "type": "module",
+  "release-it": {
+    "github": {
+      "release": true,
+      "releaseName": "v${version}",
+      "preRelease": false,
+      "draft": false,
+      "tokenRef": "GITHUB_TOKEN"
+    },
+    "npm": {
+      "publish": true
+    }
+  },
   "exports": {
     ".": {
       "types": "./dist/types.d.ts",
@@ -22,7 +34,7 @@
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
-    "release": "npm run lint && npm run test && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
+    "release": "npm run lint && npm run prepack && release-it",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch"
@@ -48,6 +60,7 @@
     "nuxt": "^3.9.3",
     "playwright-core": "^1.41.1",
     "prettier": "^3.2.4",
+    "release-it": "^17.0.3",
     "vitest": "^1.2.1"
   }
 }
