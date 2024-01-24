@@ -69,10 +69,10 @@ export default defineNuxtModule<ModuleOptions>({
       // Add supabase to the server context
       nitroConfig.alias = nitroConfig.alias || {}
       nitroConfig.alias['#supabase/server'] = resolve('./runtime/server/services')
-      // Inline module runtime in Nitro bundle
-      nitroConfig.externals = defu(typeof nitroConfig.externals === 'object' ? nitroConfig.externals : {}, {
-        inline: [resolve('./runtime')],
-      })
+      // // Inline module runtime in Nitro bundle
+      // nitroConfig.externals = defu(typeof nitroConfig.externals === 'object' ? nitroConfig.externals : {}, {
+      //   inline: [resolve('./runtime')],
+      // })
     })
 
     // Add types
@@ -91,10 +91,5 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.hook('prepare:types', options => {
       options.references.push({ path: resolve(nuxt.options.buildDir, 'types/supabase.d.ts') })
     })
-
-    // Transpile websocket only for non dev environments (except cloudflare)
-    if (!nuxt.options.dev && !['cloudflare'].includes(process.env.NITRO_PRESET as string)) {
-      nuxt.options.build.transpile.push('websocket')
-    }
   },
 })
