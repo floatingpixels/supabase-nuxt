@@ -1,5 +1,5 @@
 {
-  "name": "supabase-nuxt",
+  "name": "@floatingpixels/supabase-nuxt",
   "version": "0.1.0",
   "description": "Nuxt module for Supabase",
   "repository": "@floatingpixels/supabase-nuxt",
