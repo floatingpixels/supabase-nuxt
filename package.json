@@ -2,7 +2,7 @@
   "name": "@floatingpixels/supabase-nuxt",
   "version": "0.1.0",
   "description": "Nuxt module for Supabase",
-  "repository": "@floatingpixels/supabase-nuxt",
+  "repository": "floatingpixels/supabase-nuxt",
   "license": "MIT",
   "type": "module",
   "release-it": {
@@ -14,7 +14,11 @@
       "tokenRef": "GITHUB_TOKEN"
     },
     "npm": {
-      "publish": true
+      "publish": true,
+      "publishArgs": [
+        "--access",
+        "public"
+      ]
     }
   },
   "exports": {
