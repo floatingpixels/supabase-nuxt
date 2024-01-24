@@ -1,7 +1,7 @@
 {
   "name": "@floatingpixels/supabase-nuxt",
   "version": "0.1.1",
-  "description": "Nuxt module for Supabase",
+  "description": "Supabase module for Nuxt",
   "repository": "floatingpixels/supabase-nuxt",
   "license": "MIT",
   "type": "module",
