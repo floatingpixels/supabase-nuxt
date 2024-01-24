@@ -57,7 +57,7 @@ export default defineNuxtModule<ModuleOptions>({
     // inject server route to handle PKCE flow
     addServerHandler({
       route: '/supabase/confirm',
-      handler: resolve('./runtime/server/api/confirm.ts'),
+      handler: resolve('./runtime/server/api/confirm'),
     })
 
     //Add route middleware plugin for redirect
