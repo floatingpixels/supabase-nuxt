@@ -1,4 +1,4 @@
-import { defineNuxtModule, addPlugin, addTemplate, createResolver, addServerHandler } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, addTemplate, createResolver, addServerHandler, extendViteConfig } from '@nuxt/kit'
 import type { ModuleOptions } from './runtime/types'
 import { defu } from 'defu'
 
@@ -69,10 +69,10 @@ export default defineNuxtModule<ModuleOptions>({
       // Add supabase to the server context
       nitroConfig.alias = nitroConfig.alias || {}
       nitroConfig.alias['#supabase/server'] = resolve('./runtime/server/services')
-      // // Inline module runtime in Nitro bundle
-      // nitroConfig.externals = defu(typeof nitroConfig.externals === 'object' ? nitroConfig.externals : {}, {
-      //   inline: [resolve('./runtime')],
-      // })
+      // Inline module runtime in Nitro bundle
+      nitroConfig.externals = defu(typeof nitroConfig.externals === 'object' ? nitroConfig.externals : {}, {
+        inline: [resolve('./runtime')],
+      })
     })
 
     // Add types
@@ -90,6 +90,14 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.hook('prepare:types', options => {
       options.references.push({ path: resolve(nuxt.options.buildDir, 'types/supabase.d.ts') })
+    })
+
+    // Pre-bundle supabse packages to avoid CommonJS import issues with ESM
+    extendViteConfig(config => {
+      config.optimizeDeps = config.optimizeDeps || {}
+      config.optimizeDeps.include = config.optimizeDeps.include || []
+      config.optimizeDeps.exclude = config.optimizeDeps.exclude || []
+      config.optimizeDeps.include.push('@supabase/supabase-js', '@supabase/ssr')
     })
   },
 })
