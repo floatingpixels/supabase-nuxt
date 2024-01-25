@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const supabase = useNuxtApp().$supabase.client
+const supabase = useSupabaseClient()
+const user = await useSupabaseUser()
 
 const signInWithOAuth = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
@@ -15,9 +16,14 @@ const signIn = async () => {
   const { error } = await supabase.auth.signInWithOtp({
     email: email.value,
     options: {
-      emailRedirectTo: 'http://localhost:3000/supabase/confirm',
+      emailRedirectTo: 'http://localhost:3000/confirm',
     },
   })
+  if (error) console.log(error)
+}
+
+const signOut = async () => {
+  const { error } = await supabase.auth.signOut()
   if (error) console.log(error)
 }
 
@@ -41,9 +47,10 @@ const email = ref('')
       v-model="email"
       type="email"
     />
-    <!-- <template v-if="user"> -->
-    <!--   <NuxtLink to="/"> Go to home page </NuxtLink> -->
-    <!--   <button @click="signOut">Sign Out</button> -->
-    <!-- </template> -->
+    <template v-if="user">
+      <h2>Logged in as {{ user.email }}</h2>
+      <NuxtLink to="/"> Go to home page </NuxtLink>
+      <button @click="signOut">Sign Out</button>
+    </template>
   </div>
 </template>
