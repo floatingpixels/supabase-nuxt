@@ -92,12 +92,21 @@ export default defineNuxtModule<ModuleOptions>({
       options.references.push({ path: resolve(nuxt.options.buildDir, 'types/supabase.d.ts') })
     })
 
-    // Pre-bundle supabse packages to avoid CommonJS import issues with ESM
+    // Pre-bundle supabase packages to avoid CommonJS import issues with ESM
+    // e.g. https://github.com/supabase/auth-helpers/issues/725
     extendViteConfig(config => {
       config.optimizeDeps = config.optimizeDeps || {}
       config.optimizeDeps.include = config.optimizeDeps.include || []
       config.optimizeDeps.exclude = config.optimizeDeps.exclude || []
-      config.optimizeDeps.include.push('@supabase/supabase-js', '@supabase/ssr')
+      config.optimizeDeps.include.push(
+        '@supabase/functions-js',
+        '@supabase/gotrue-js',
+        '@supabase/postgrest-js',
+        '@supabase/realtime-js',
+        '@supabase/storage-js',
+        '@supabase/supabase-js',
+        '@supabase/ssr',
+      )
     })
   },
 })
