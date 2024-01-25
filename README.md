@@ -158,7 +158,7 @@ Once the authorization flow is triggered using the `auth` wrapper of the `useSup
 
 ### E-Mail Authentication
 
-When using e-mail authentication, a confirmation e-mail is sent to new users, and an e-mail containing a magic link is sent to existing users. For those links to work with your application, you need to adjust the e-mail templates in your Supabase settings under `Aithentication -> Email Templates`. The generated links must contain a `token_hash` and `type` URL parameter, and point to the confirmation URL of your app, which is `/supabase/confirm` by default. In addition you can set the URL parameter `next` to determine the route users will be forwarded to in your app when authorization is successful. If `next` is omitted, it will route to `/`. An example template looks like this:
+When using e-mail authentication, a confirmation e-mail is sent to new users, and an e-mail containing a magic link is sent to existing users. For those links to work with your application, you need to adjust the e-mail templates in your Supabase settings under `Authentication -> Email Templates`. The generated links must contain a `token_hash` and `type` URL parameter, and point to the confirmation URL of your app, which is `/supabase/confirm` by default. In addition you can set the URL parameter `next` to determine the route users will be forwarded to in your app when authorization is successful. If `next` is omitted, it will route to `/`. An example template looks like this:
 
 ```html
 <h2>Confirm your signup</h2>
@@ -171,7 +171,9 @@ When using e-mail authentication, a confirmation e-mail is sent to new users, an
 </p>
 ```
 
-The confirmation route on your server is provided by this module, so you don't need to implement it yourself. It's available at `/supabase/confirm`. It will automatically confirm the user and redirect to the `next` route. If you want to customize the confirmation route, you can do so by creating a server route to handle the request, and point to it in your Supabase e-mail template. Your custom route will receive the `token_hash` and `type` URL parameters, and the `next` URL parameter if provided. You can use the `useSupabaseClient` composable to confirm the user and redirect to the `next` route:
+The confirmation route on your server is provided by this module, so you don't need to implement it yourself. It's available at `/supabase/confirm`. It will automatically confirm the user and redirect to the `next` route.
+
+If you want to customize the confirmation route, you can do so by creating a server route to handle the request, and point to it in your Supabase e-mail template. Your custom route will receive the `token_hash` and `type` URL parameters, and the `next` URL parameter if provided. You can use the `useSupabaseClient` composable to confirm the user and redirect to the `next` route:
 
 > ⚠️ You can use the provided confirm route at `/supabase/confirm`, the implementation of a custom route is optional!
 
