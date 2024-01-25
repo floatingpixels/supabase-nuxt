@@ -5,7 +5,7 @@ const signInWithOAuth = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
-      redirectTo: 'http://localhost:3000/confirm',
+      redirectTo: 'http://localhost:3000/supabase/callback',
     },
   })
   if (error) console.log(error)
@@ -15,7 +15,7 @@ const signIn = async () => {
   const { error } = await supabase.auth.signInWithOtp({
     email: email.value,
     options: {
-      emailRedirectTo: 'http://localhost:3000/api/auth/confirm',
+      emailRedirectTo: 'http://localhost:3000/supabase/confirm',
     },
   })
   if (error) console.log(error)

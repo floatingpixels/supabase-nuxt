@@ -154,9 +154,98 @@ const signInWithOtp = async () => {
 
 > ⚠️ Ensure to activate and configure the authentication providers you want to use in the Supabase Dashboard under `Authentication -> Providers`.
 
-Once the authorization flow is triggered using the `auth` wrapper of the `useSupabaseClient` composable, the session management is handled automatically.
+Once the authorization flow is triggered using the `auth` wrapper of the `useSupabaseClient` composable, the session management is handled automatically. For the authentication flow PKCE is used, which requires an exchange between your server and the Supabase authentication server for some authentication methods. Please make sure you update your Supabase settings accordingly.
 
-If `redirect` is set to `true` in the module options, users will be automatically routed to this page when they are not authenticated. Each time a user is trying to access a page, they will automatically be redirected to the log-in page. If you want to allow access to "public" pages, you just need to add them in the `exclude` `redirect` option.
+### E-Mail Authentication
+
+When using e-mail authentication, a confirmation e-mail is sent to new users, and an e-mail containing a magic link is sent to existing users. For those links to work with your application, you need to adjust the e-mail templates in your Supabase settings under `Aithentication -> Email Templates`. The generated links must contain a `token_hash` and `type` URL parameter, and point to the confirmation URL of your app, which is `/supabase/confirm` by default. In addition you can set the URL parameter `next` to determine the route users will be forwarded to in your app when authorization is successful. If `next` is omitted, it will route to `/`. An example template looks like this:
+
+```html
+<h2>Confirm your signup</h2>
+
+<p>Follow this link to confirm your user:</p>
+<p>
+  <a href="{{ .SiteURL }}/supabase/confirm?token_hash={{ .TokenHash }}&type=email&next=/path-to-your-page"
+    >Confirm your email</a
+  >
+</p>
+```
+
+The confirmation route on your server is provided by this module, so you don't need to implement it yourself. It's available at `/supabase/confirm`. It will automatically confirm the user and redirect to the `next` route. If you want to customize the confirmation route, you can do so by creating a server route to handle the request, and point to it in your Supabase e-mail template. Your custom route will receive the `token_hash` and `type` URL parameters, and the `next` URL parameter if provided. You can use the `useSupabaseClient` composable to confirm the user and redirect to the `next` route:
+
+> ⚠️ You can use the provided confirm route at `/supabase/confirm`, the implementation of a custom route is optional!
+
+```ts [server/api/confirm.ts]
+import { EmailOtpType } from '@supabase/supabase-js'
+import { supabaseServerClient } from '#supabase/server'
+
+export default defineEventHandler(async event => {
+  const query = getQuery(event)
+  const token_hash = query.token_hash as string
+  const type = query.type as EmailOtpType | null
+  const next = (query.next as string) ?? '/'
+
+  if (!token_hash || !type) {
+    throw createError({ statusMessage: 'Invalid token' })
+  }
+
+  const supabase = await supabaseServerClient(event)
+  const { error } = await supabase.auth.verifyOtp({ type, token_hash })
+
+  if (error) {
+    throw createError({ statusMessage: error.message })
+  }
+
+  await sendRedirect(event, next, 302)
+})
+```
+
+### OAuth Authentication
+
+When using OAuth authentication, you need to configure the OAuth provider in your Supabase settings under `Authentication -> Providers`. You can then use the `signInWithOAuth` method of the `auth` wrapper of the `useSupabaseClient` composable to initiate the authorization flow. This module provides a default callback under `/supabase/callback` that you can provide to the authentication function:
+
+```ts [pages/login.vue]
+const signInWithOAuth = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo: 'http://<your-site-url>/supabase/callback',
+    },
+  })
+  if (error) console.log(error)
+}
+```
+
+You can customize the callback by creating your own server route, and point to it when calling `signInWithOAuth`. The callback route will receive a code, that needs to be exchanged for a session. Here is an example:
+
+> ⚠️ You can use the provided callback route at `/supabase/callback`, the implementation of a custom callback is optional!
+
+```ts [server/api/callback.ts]
+import { supabaseServerClient } from '#supabase/server'
+
+export default defineEventHandler(async event => {
+  const query = getQuery(event)
+  const code = query.code as string
+  const next = (query.next as string) ?? '/'
+
+  if (!code) {
+    throw createError({ statusMessage: 'No code provided' })
+  }
+
+  const supabase = await supabaseServerClient(event)
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (error) {
+    throw createError({ statusMessage: error.message })
+  }
+
+  await sendRedirect(event, next, 302)
+})
+```
+
+### Redirection for non-authorized users
+
+If `redirect` is set to `true` in the module options, users will be automatically routed to the login page when they are not authenticated. If you want to allow access to "public" pages, you just need to add them in the `exclude` `redirect` option, and they will not redirect unauthenticated users.
 
 ## Composables
 
@@ -164,7 +253,7 @@ If `redirect` is set to `true` in the module options, users will be automaticall
 
 This composable can be used to make requests to the Supabase API. It's autoimported and ready to use in your components. It's using [supabase-js](https://github.com/supabase/supabase-js/) under the hood, it gives access to the [Supabase client](https://supabase.com/docs/reference/javascript/initializing) and all of its features.
 
-## Database Request
+#### Database Request
 
 Please check [Supabase](https://supabase.com/docs/reference/javascript/select) documentation on how to fully use the Supabase client.
 
@@ -182,7 +271,7 @@ const { data: restaurant } = await useAsyncData('restaurant', async () => {
 </script>
 ```
 
-## Realtime
+#### Realtime
 
 Based on [Supabase Realtime](https://github.com/supabase/realtime), listen to changes in your PostgreSQL Database and broadcasts them over WebSockets.
 
@@ -221,7 +310,7 @@ onUnmounted(() => {
 </script>
 ```
 
-## Typescript
+#### Type Support
 
 You can pass Database typings to the client. Check Supabase [documentation](https://supabase.com/docs/reference/javascript/release-notes#typescript-support) for further information.
 
@@ -232,7 +321,7 @@ const client = useSupabaseClient<Database>()
 </script>
 ```
 
-## Authentication
+#### Authentication Client
 
 The useSupabaseClient composable is providing all methods to manage authorization under `useSupabaseClient().auth`. For more details please see the [supabase-js auth documentation](https://supabase.com/docs/reference/javascript/auth-api). Here is an example for signing in and out:
 

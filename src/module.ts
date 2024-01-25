@@ -72,10 +72,16 @@ export default defineNuxtModule<ModuleOptions>({
       dirs.push(resolve('./runtime/composables'))
     })
 
-    // inject server route to handle PKCE flow
+    // inject server route to handle email confirmation in PKCE flow
     addServerHandler({
       route: '/supabase/confirm',
-      handler: resolve('./runtime/server/api/confirm'),
+      handler: resolve('./runtime/server/auth/confirm'),
+    })
+
+    // inject server route to handle OAuth callback
+    addServerHandler({
+      route: '/supabase/callback',
+      handler: resolve('./runtime/server/auth/callback'),
     })
 
     //Add route middleware plugin for redirect
