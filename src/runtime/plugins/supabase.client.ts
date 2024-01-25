@@ -1,4 +1,4 @@
-import { defineNuxtPlugin, useRuntimeConfig } from '#imports'
+import { defineNuxtPlugin, useRuntimeConfig, useCookie } from '#imports'
 import { createBrowserClient } from '@supabase/ssr'
 
 export default defineNuxtPlugin({
@@ -6,9 +6,23 @@ export default defineNuxtPlugin({
   enforce: 'pre',
   async setup() {
     const config = useRuntimeConfig().public.supabase
-    const { url, key } = config
+    const { url, key, cookieOptions } = config
 
-    const supabaseBrowserClient = createBrowserClient(url, key)
+    const supabaseBrowserClient = createBrowserClient(url, key, {
+      cookies: {
+        get(name: string) {
+          return useCookie(name).value
+        },
+        set(name: string, value: string) {
+          useCookie(name, cookieOptions).value = value
+        },
+        remove(key, options) {
+          useCookie(key, { ...options, expires: 0 }).value = ''
+        },
+      },
+      cookieOptions: cookieOptions,
+      isSingleton: true,
+    })
 
     return {
       provide: {

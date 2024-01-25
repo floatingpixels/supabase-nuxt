@@ -34,16 +34,41 @@ export interface ModuleOptions {
   redirect?: boolean
 
   /**
-   * Redirection options, set routes for login and callback redirect
+   * Redirection options, set routes for login and specify pages to exclude from redirection
    * @default
    * {
       login: '/login',
-      callback: '/confirm',
       exclude: [],
     }
    * @type RedirectOptions
    */
   redirectOptions?: RedirectOptions
+
+  /**
+   * Cookie options
+   * @default {
+      maxAge: 60 * 60 * 8,
+      sameSite: 'lax',
+      secure: true,
+    }
+   * @type CookieOptions
+   * @docs https://nuxt.com/docs/api/composables/use-cookie#options
+   */
+  cookieOptions?: CookieOptions
+
+  /**
+   * Supabase Client options
+   * @default {
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+      },
+    }
+   * @type object
+   * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
+   */
+  clientOptions?: SupabaseClientOptions<string>
 }
 
 export interface RedirectOptions {
@@ -54,7 +79,7 @@ export interface RedirectOptions {
    */
   login?: string
   /**
-   * Callback route
+   * Routes to exclude from redirection
    * @default []
    * @type string[]
    */

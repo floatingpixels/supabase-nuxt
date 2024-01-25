@@ -5,7 +5,7 @@
 
 ## Features
 
-[@floatingpixels/supabase-nuxt](https://github.com/nuxt-modules/supabase) is a Nuxt module for first class integration with Supabase. It makes it easy to use Supabase authentication, database and realtime features in your Nuxt 3 application.
+[@floatingpixels/supabase-nuxt](https://github.com/nuxt-modules/supabase) is a Nuxt module for first class integration with Supabase. It makes it easy to use Supabase authentication, database and realtime features in your Nuxt 3 application. Especially when using server-side rendering SSR, using Supabase can be tricky, this module takes care of the intricacies and lets you simply use the power of Supabase!
 
 Checkout the [Nuxt 3](https://v3.nuxtjs.org) documentation and [Supabase](https://supabase.com) to learn more.
 
@@ -91,12 +91,6 @@ Default:
 - `login`: User will be redirected to this route if not authenticated or after logout.
 - `exclude`: Routes to exclude from the redirect. `['/foo', '/bar/*']` will exclude the `foo` page and all pages in your `bar` folder.
 
-### `cookieName`
-
-Default: `sb`
-
-Cookie name used for storing access and refresh tokens, added in front of `-access-token` and `-refresh-token` to form the full cookie name e.g. `sb-access-token`
-
 ### cookieOptions
 
 ```ts
@@ -107,7 +101,7 @@ Cookie name used for storing access and refresh tokens, added in front of `-acce
   }
 ```
 
-Options for cookies used to share tokens between server and client, refer to [cookieOptions](https://nuxt.com/docs/api/composables/use-cookie#options) for available settings. Please note that the lifetime set here does not determine the Supabase session lifetime.
+Options for cookies used for authentication and session management, refer to [cookieOptions](https://nuxt.com/docs/api/composables/use-cookie#options) for available settings. Please note that the lifetime set here does not determine the Supabase session lifetime.
 
 ### `clientOptions`
 

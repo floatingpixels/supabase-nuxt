@@ -1,6 +1,8 @@
 import { defineNuxtModule, addPlugin, addTemplate, createResolver, addServerHandler, extendViteConfig } from '@nuxt/kit'
-import type { ModuleOptions } from './runtime/types'
 import { defu } from 'defu'
+import type { ModuleOptions } from './runtime/types'
+import type { SupabaseClientOptions } from '@supabase/supabase-js'
+import type { CookieOptions } from 'nuxt/app'
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -20,7 +22,21 @@ export default defineNuxtModule<ModuleOptions>({
       login: '/login',
       exclude: [],
     },
+    cookieOptions: {
+      maxAge: 60 * 60 * 8,
+      sameSite: 'lax',
+      secure: true,
+    } as CookieOptions,
+    clientOptions: {
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    } as SupabaseClientOptions<string>,
   },
+
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
     console.log('Module setup function')
@@ -38,6 +54,8 @@ export default defineNuxtModule<ModuleOptions>({
       key: options.key,
       redirect: options.redirect,
       redirectOptions: options.redirectOptions,
+      cookieOptions: options.cookieOptions,
+      clientOptions: options.clientOptions,
     })
 
     // Private runtimeConfig
