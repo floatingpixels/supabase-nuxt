@@ -3,5 +3,8 @@ export default defineNuxtConfig({
   supabase: {
     redirect: true,
   },
-  devtools: { enabled: true },
+  devtools: { enabled: false },
+  vue: {
+    propsDestructure: true,
+  },
 })

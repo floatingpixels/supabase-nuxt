@@ -249,6 +249,29 @@ export default defineEventHandler(async event => {
 
 If `redirect` is set to `true` in the module options, users will be automatically routed to the login page when they are not authenticated. If you want to allow access to "public" pages, you just need to add them in the `exclude` `redirect` option, and they will not redirect unauthenticated users.
 
+### Error Handling
+
+When an authentication error occurs, an exception is thrown. You can create an error page in the root of your app, to show an appropriate error message, clear the error and send the user to an appropriate route to continue. Here is an example for `error.vue`:
+
+```vue
+<script setup lang="ts">
+import type { H3Error } from 'h3'
+const { error } = defineProps<{
+  error: H3Error
+}>()
+
+const handleError = () => clearError({ redirect: '/' })
+</script>
+
+<template>
+  <div>
+    <h2>{{ error.statusCode }}</h2>
+    <p>{{ error.message }}</p>
+    <button @click="handleError">Clear errors</button>
+  </div>
+</template>
+```
+
 ## Composables
 
 ### useSupabaseClient

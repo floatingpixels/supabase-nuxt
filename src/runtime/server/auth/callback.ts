@@ -14,7 +14,6 @@ export default defineEventHandler(async event => {
   const { error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error) {
-    // TODO: Consider sending user to meaningful error page, or redirect to login with error message
     throw createError({ statusMessage: error.message })
   }
 

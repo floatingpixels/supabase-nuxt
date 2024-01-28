@@ -37,9 +37,15 @@ export default defineNuxtModule<ModuleOptions>({
     } as SupabaseClientOptions<string>,
   },
 
+  // hooks: {
+  //   'pages:routerOptions': options => {
+  //     console.info(`Router options: ${options}`)
+  //   },
+  // },
+
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
-    console.log('Module setup function')
+
     // Make sure url and key are set
     if (!options.url) {
       console.warn('Missing `SUPABASE_URL` in `.env`')
@@ -66,6 +72,7 @@ export default defineNuxtModule<ModuleOptions>({
     // Do not add the extension since the `.ts` will be transpiled
     addPlugin(resolve('./runtime/plugins/supabase.server'))
     addPlugin(resolve('./runtime/plugins/supabase.client'))
+    addPlugin(resolve('./runtime/plugins/middleware-auth'))
 
     // Add supabase composables
     nuxt.hook('imports:dirs', dirs => {
@@ -86,7 +93,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     //Add route middleware plugin for redirect
     if (options.redirect) {
-      addPlugin(resolve('./runtime/plugins/auth-redirect'))
+      addPlugin(resolve('./runtime/plugins/middleware-auth-redirect'))
     }
 
     nuxt.hook('nitro:config', nitroConfig => {

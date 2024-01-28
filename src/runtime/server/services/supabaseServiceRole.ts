@@ -9,7 +9,7 @@ export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseCl
     public: {
       supabase: { url, cookieOptions },
     },
-  } = useRuntimeConfig(event)
+  } = useRuntimeConfig()
 
   // Make sure service key is set
   if (!serviceKey) {

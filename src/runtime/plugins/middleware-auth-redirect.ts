@@ -1,26 +1,17 @@
 import { useSupabaseUser } from '../composables/useSupabaseUser'
-import {
-  defineNuxtPlugin,
-  addRouteMiddleware,
-  defineNuxtRouteMiddleware,
-  useRuntimeConfig,
-  navigateTo,
-  abortNavigation,
-} from '#imports'
+import { defineNuxtPlugin, addRouteMiddleware, defineNuxtRouteMiddleware, useRuntimeConfig, navigateTo } from '#imports'
 
 export default defineNuxtPlugin({
-  name: 'auth-redirect',
+  name: 'middleware-auth-redirect',
   setup() {
     addRouteMiddleware(
-      'global-auth',
+      '02-global-auth-redirect',
       defineNuxtRouteMiddleware(async to => {
-        if (to.path === '/supabase/confirm') abortNavigation()
-
         const config = useRuntimeConfig().public.supabase
         const { login, exclude } = config.redirectOptions
 
         // Do not redirect on login route and excluded routes
-        const isExcluded = [...exclude, login, '/supabase/confirm']?.some(path => {
+        const isExcluded = [...(exclude || []), login ? login : '/login']?.some(path => {
           const regex = new RegExp(`^${path.replace(/\*/g, '.*')}$`)
           return regex.test(to.path)
         })
@@ -28,7 +19,7 @@ export default defineNuxtPlugin({
 
         const user = await useSupabaseUser()
         if (!user) {
-          if (to.path !== '/login') return navigateTo('/login')
+          return navigateTo('/login')
         }
       }),
       { global: true },

@@ -2,11 +2,12 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { getCookie, setCookie, H3Event } from 'h3'
 import { useRuntimeConfig } from '#imports'
+import type { CookieOptions } from 'nuxt/app'
 
 export const supabaseServerClient = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
   const {
     supabase: { url, key, cookieOptions },
-  } = useRuntimeConfig(event).public
+  } = useRuntimeConfig().public
 
   let supabaseClient = event.context._supabaseClient as SupabaseClient<T>
 
@@ -17,7 +18,7 @@ export const supabaseServerClient = async <T>(event: H3Event): Promise<SupabaseC
           return getCookie(event, name)
         },
         set(name: string, value: string) {
-          setCookie(event, name, value)
+          setCookie(event, name, value, cookieOptions as CookieOptions)
         },
         remove(key, options) {
           setCookie(event, key, '', { ...options, expires: 0 })
