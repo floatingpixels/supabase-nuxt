@@ -7,4 +7,8 @@ export default defineNuxtConfig({
   vue: {
     propsDestructure: true,
   },
+  typescript: {
+    typeCheck: true,
+    strict: true,
+  },
 })
