@@ -158,20 +158,20 @@ Once the authorization flow is triggered using the `auth` wrapper of the `useSup
 
 ### E-Mail Authentication
 
-When using e-mail authentication, a confirmation e-mail is sent to new users, and an e-mail containing a magic link is sent to existing users. For those links to work with your application, you need to adjust the e-mail templates in your Supabase settings under `Authentication -> Email Templates`. The generated links must contain a `token_hash` and `type` URL parameter, and point to the confirmation URL of your app, which is `/supabase/confirm` by default. In addition you can set the URL parameter `next` to determine the route users will be forwarded to in your app when authorization is successful. If `next` is omitted, it will route to `/`. An example template looks like this:
+When using e-mail authentication, a confirmation e-mail is sent to new users, and an e-mail containing a magic link is sent to existing users. For those links to work with your application, you need to adjust the e-mail templates in your Supabase settings under `Authentication -> Email Templates`. The generated links must contain a `token_hash` and `type` URL parameter, and point to the confirmation URL of your app, which is `/supabase/auth/confirm` by default. In addition you can set the URL parameter `next` to determine the route users will be forwarded to in your app when authorization is successful. If `next` is omitted, it will route to `/`. An example template looks like this:
 
 ```html
 <h2>Confirm your signup</h2>
 
 <p>Follow this link to confirm your user:</p>
 <p>
-  <a href="{{ .SiteURL }}/supabase/confirm?token_hash={{ .TokenHash }}&type=email&next=/path-to-your-page"
+  <a href="{{ .SiteURL }}/supabase/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/path-to-your-page"
     >Confirm your email</a
   >
 </p>
 ```
 
-The confirmation route on your server is provided by this module, so you don't need to implement it yourself. It's available at `/supabase/confirm`. It will automatically confirm the user and redirect to the `next` route.
+The confirmation route on your server is provided by this module, so you don't need to implement it yourself. It's available at `/supabase/auth/confirm`. It will automatically confirm the user and redirect to the `next` route.
 
 If you want to customize the confirmation route, you can do so by creating a server route to handle the request, and point to it in your Supabase e-mail template. Your custom route will receive the `token_hash` and `type` URL parameters, and the `next` URL parameter if provided. You can use the `useSupabaseClient` composable to confirm the user and redirect to the `next` route:
 
@@ -204,14 +204,14 @@ export default defineEventHandler(async event => {
 
 ### OAuth Authentication
 
-When using OAuth authentication, you need to configure the OAuth provider in your Supabase settings under `Authentication -> Providers`. You can then use the `signInWithOAuth` method of the `auth` wrapper of the `useSupabaseClient` composable to initiate the authorization flow. This module provides a default callback under `/supabase/callback` that you can provide to the authentication function:
+When using OAuth authentication, you need to configure the OAuth provider in your Supabase settings under `Authentication -> Providers`. You can then use the `signInWithOAuth` method of the `auth` wrapper of the `useSupabaseClient` composable to initiate the authorization flow. This module provides a default callback under `/supabase/auth/callback` that you can provide to the authentication function:
 
 ```ts [pages/login.vue]
 const signInWithOAuth = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
-      redirectTo: 'http://<your-site-url>/supabase/callback',
+      redirectTo: 'http://<your-site-url>/supabase/auth/callback',
     },
   })
   if (error) console.log(error)
@@ -220,7 +220,7 @@ const signInWithOAuth = async () => {
 
 You can customize the callback by creating your own server route, and point to it when calling `signInWithOAuth`. The callback route will receive a code, that needs to be exchanged for a session. Here is an example:
 
-> ⚠️ You can use the provided callback route at `/supabase/callback`, the implementation of a custom callback is optional!
+> ⚠️ You can use the provided callback route at `/supabase/auth/callback`, the implementation of a custom callback is optional!
 
 ```ts [server/api/callback.ts]
 import { supabaseServerClient } from '#supabase/server'

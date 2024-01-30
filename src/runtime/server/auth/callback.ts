@@ -1,5 +1,4 @@
-import { defineEventHandler } from '#imports'
-import { createError, getQuery, sendRedirect } from 'h3'
+import { defineEventHandler, createError, getQuery, sendRedirect } from 'h3'
 import { supabaseServerClient } from '#supabase/server'
 
 export default defineEventHandler(async event => {

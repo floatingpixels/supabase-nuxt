@@ -3,7 +3,6 @@ import { supabaseServerClient } from '#supabase/server'
 
 export default defineEventHandler(async event => {
   const supabase = await supabaseServerClient(event)
-
   if (!supabase) {
     throw createError({ statusMessage: 'Supabase client not found' })
   }
@@ -11,7 +10,7 @@ export default defineEventHandler(async event => {
   const { data, error } = await supabase.from('test').select('*')
 
   if (error) {
-    throw createError({ statusMessage: error.message })
+    throw createError({ statusMessage: error?.message })
   }
 
   return data

@@ -1,4 +1,4 @@
-import { defineNuxtPlugin, useRuntimeConfig, useCookie } from '#imports'
+import { defineNuxtPlugin, useRuntimeConfig, useCookie } from 'nuxt/app'
 import { createBrowserClient } from '@supabase/ssr'
 
 export default defineNuxtPlugin({
@@ -14,7 +14,7 @@ export default defineNuxtPlugin({
           return useCookie(name).value
         },
         set(name: string, value: string) {
-          useCookie(name, cookieOptions).value = value
+          useCookie(name, { ...cookieOptions, readonly: false }).value = value
         },
         remove(key, options) {
           useCookie(key, { ...options, expires: 0 }).value = ''
@@ -31,8 +31,5 @@ export default defineNuxtPlugin({
         },
       },
     }
-  },
-  env: {
-    islands: false,
   },
 })

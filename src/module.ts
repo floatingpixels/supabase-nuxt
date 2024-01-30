@@ -1,4 +1,4 @@
-import { defineNuxtModule, addPlugin, addTemplate, createResolver, addServerHandler, extendViteConfig } from '@nuxt/kit'
+import { extendViteConfig, defineNuxtModule, addPlugin, addTemplate, createResolver, addServerHandler } from '@nuxt/kit'
 import { defu } from 'defu'
 import type { ModuleOptions } from './runtime/types'
 import type { SupabaseClientOptions } from '@supabase/supabase-js'
@@ -37,12 +37,6 @@ export default defineNuxtModule<ModuleOptions>({
     } as SupabaseClientOptions<string>,
   },
 
-  // hooks: {
-  //   'pages:routerOptions': options => {
-  //     console.info(`Router options: ${options}`)
-  //   },
-  // },
-
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
@@ -69,26 +63,27 @@ export default defineNuxtModule<ModuleOptions>({
       serviceKey: options.serviceKey,
     })
 
-    // Do not add the extension since the `.ts` will be transpiled
-    addPlugin(resolve('./runtime/plugins/supabase.server'))
-    addPlugin(resolve('./runtime/plugins/supabase.client'))
-    addPlugin(resolve('./runtime/plugins/middleware-auth'))
-
-    // Add supabase composables
-    nuxt.hook('imports:dirs', dirs => {
-      dirs.push(resolve('./runtime/composables'))
-    })
-
     // inject server route to handle email confirmation in PKCE flow
     addServerHandler({
-      route: '/supabase/confirm',
+      route: '/supabase/auth/confirm',
       handler: resolve('./runtime/server/auth/confirm'),
+      method: 'get',
     })
 
     // inject server route to handle OAuth callback
     addServerHandler({
-      route: '/supabase/callback',
+      route: '/supabase/auth/callback',
       handler: resolve('./runtime/server/auth/callback'),
+      method: 'get',
+    })
+
+    // Do not add the extension since the `.ts` will be transpiled
+    addPlugin(resolve('./runtime/plugins/supabase.server'))
+    addPlugin(resolve('./runtime/plugins/supabase.client'))
+
+    // Add supabase composables
+    nuxt.hook('imports:dirs', dirs => {
+      dirs.push(resolve('./runtime/composables'))
     })
 
     //Add route middleware plugin for redirect
@@ -126,18 +121,17 @@ export default defineNuxtModule<ModuleOptions>({
     // Pre-bundle supabase packages to avoid CommonJS import issues with ESM
     // e.g. https://github.com/supabase/auth-helpers/issues/725
     extendViteConfig(config => {
-      config.optimizeDeps = config.optimizeDeps || {}
-      config.optimizeDeps.include = config.optimizeDeps.include || []
-      config.optimizeDeps.exclude = config.optimizeDeps.exclude || []
-      config.optimizeDeps.include.push(
-        '@supabase/functions-js',
-        '@supabase/gotrue-js',
-        '@supabase/postgrest-js',
-        '@supabase/realtime-js',
-        '@supabase/storage-js',
-        '@supabase/supabase-js',
-        '@supabase/ssr',
-      )
+      config.optimizeDeps = defu(typeof config.optimizeDeps === 'object' ? config.optimizeDeps : {}, {
+        include: [
+          '@supabase/functions-js',
+          '@supabase/gotrue-js',
+          '@supabase/postgrest-js',
+          '@supabase/realtime-js',
+          '@supabase/storage-js',
+          '@supabase/supabase-js',
+          '@supabase/ssr',
+        ],
+      })
     })
   },
 })

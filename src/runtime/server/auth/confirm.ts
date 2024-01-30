@@ -1,6 +1,5 @@
-import { defineEventHandler } from '#imports'
-import { EmailOtpType } from '@supabase/supabase-js'
-import { createError, getQuery, sendRedirect } from 'h3'
+import type { EmailOtpType } from '@supabase/supabase-js'
+import { createError, getQuery, sendRedirect, defineEventHandler } from 'h3'
 import { supabaseServerClient } from '#supabase/server'
 
 export default defineEventHandler(async event => {
@@ -8,7 +7,6 @@ export default defineEventHandler(async event => {
   const token_hash = query.token_hash as string
   const type = query.type as EmailOtpType | null
   const next = (query.next as string) ?? '/'
-
   if (!token_hash || !type) {
     throw createError({ statusMessage: 'Invalid token' })
   }
@@ -19,6 +17,6 @@ export default defineEventHandler(async event => {
   if (error) {
     throw createError({ statusMessage: error.message })
   }
-
+  console.log('EMail OTP verified')
   await sendRedirect(event, next, 302)
 })

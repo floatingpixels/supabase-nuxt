@@ -1,4 +1,4 @@
-import { defineNuxtPlugin, useRuntimeConfig, useRequestEvent } from '#imports'
+import { defineNuxtPlugin, useRuntimeConfig, useRequestEvent } from 'nuxt/app'
 import { createServerClient } from '@supabase/ssr'
 import { getCookie, setCookie } from 'h3'
 
