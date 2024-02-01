@@ -17,6 +17,6 @@ export default defineEventHandler(async event => {
   if (error) {
     throw createError({ statusMessage: error.message })
   }
-  console.log('EMail OTP verified')
+
   await sendRedirect(event, next, 302)
 })
