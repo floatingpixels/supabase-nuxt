@@ -12,13 +12,13 @@ export default defineNuxtPlugin({
     const supabaseServerClient = createServerClient(url, key, {
       cookies: {
         get(name: string) {
-          return getCookie(event, name)
+          return getCookie(event!, name)
         },
         set(name: string, value: string) {
-          setCookie(event, name, value, cookieOptions)
+          setCookie(event!, name, value, cookieOptions)
         },
         remove(key, options) {
-          setCookie(event, key, '', { ...options, expires: 0 })
+          setCookie(event!, key, '', { ...options, expires: 0 })
         },
       },
       cookieOptions: cookieOptions,
