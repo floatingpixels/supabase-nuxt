@@ -38,11 +38,11 @@ SUPABASE_URL="https://example.supabase.co"
 SUPABASE_KEY="<your_key>"
 ```
 
-Alternatively, you can prefix the env variables with `NUXT_PUBLIC_` in order to use runtimeConfig.
+Alternatively, you can prefix the environment variables with `NUXT_PUBLIC_` in order to use `runtimeConfig`.
 
 ## Options
 
-You can configure the supabase module by using the `supabase` key in `nuxt.config`:
+You can configure the Supabase module by using the `supabase` key in `nuxt.config`:
 
 ```ts [nuxt.config.ts]
 export default defineNuxtConfig({
@@ -75,7 +75,7 @@ Supabase 'service role key', has super admin rights and can bypass your Row Leve
 
 Default: `false`
 
-Redirect automatically to the configured login page if a non authenticated user is navigating to a page. When set to `true` a global middleware is used to check for a logged-in supabase use on all non-excluded routes.
+Re-direct automatically to the configured login page if a non authenticated user is navigating to a page. When set to `true` a global middleware is used to check for a logged-in Supabase use on all non-excluded routes.
 
 ### `redirectOptions`
 
@@ -89,7 +89,7 @@ Default:
 ```
 
 - `login`: User will be redirected to this route if not authenticated or after logout.
-- `exclude`: Routes to exclude from the redirect. `['/foo', '/bar/*']` will exclude the `foo` page and all pages in your `bar` folder.
+- `exclude`: Routes to exclude from the re-direct. `['/foo', '/bar/*']` will exclude the `foo` page and all pages in your `bar` folder.
 
 ### cookieOptions
 
@@ -154,7 +154,7 @@ const signInWithOtp = async () => {
 
 > ⚠️ Ensure to activate and configure the authentication providers you want to use in the Supabase Dashboard under `Authentication -> Providers`.
 
-Once the authorization flow is triggered using the `auth` wrapper of the `useSupabaseClient` composable, the session management is handled automatically. For the authentication flow PKCE is used, which requires an exchange between your server and the Supabase authentication server for some authentication methods. Please make sure you update your Supabase settings accordingly.
+Once the authorization flow is triggered using the `auth` wrapper of the `useSupabaseClient` composable, the session management is handled automatically. For the authentication flow PKCE is used, which requires an exchange between your server and the Supabase authentication server for some authentication methods.
 
 ### E-Mail Authentication
 
@@ -171,9 +171,9 @@ When using e-mail authentication, a confirmation e-mail is sent to new users, an
 </p>
 ```
 
-The confirmation route on your server is provided by this module, so you don't need to implement it yourself. It's available at `/supabase/auth/confirm`. It will automatically confirm the user and redirect to the `next` route.
+The confirmation route on your server is provided by this module, so you don't need to implement it yourself. It's available at `/supabase/auth/confirm`. It will automatically confirm the user and re-direct to the `next` route.
 
-If you want to customize the confirmation route, you can do so by creating a server route to handle the request, and point to it in your Supabase e-mail template. Your custom route will receive the `token_hash` and `type` URL parameters, and the `next` URL parameter if provided. You can use the `useSupabaseClient` composable to confirm the user and redirect to the `next` route:
+If you want to customize the confirmation route, you can do so by creating a server route to handle the request, and point to it in your Supabase e-mail template. Your custom route will receive the `token_hash` and `type` URL parameters, and the `next` URL parameter if provided. You can use the `useSupabaseClient` composable to confirm the user and re-direct to the `next` route:
 
 > ⚠️ You can use the provided confirm route at `/supabase/confirm`, the implementation of a custom route is optional!
 
@@ -247,7 +247,7 @@ export default defineEventHandler(async event => {
 
 ### Redirection for non-authorized users
 
-If `redirect` is set to `true` in the module options, users will be automatically routed to the login page when they are not authenticated. If you want to allow access to "public" pages, you just need to add them in the `exclude` `redirect` option, and they will not redirect unauthenticated users.
+If `redirect` is set to `true` in the module options, users will be automatically routed to the login page when they are not authenticated. If you want to allow access to "public" pages, you just need to add them in the `exclude` `redirect` option, and they will not re-direct unauthenticated users.
 
 ### Error Handling
 
@@ -276,7 +276,7 @@ const handleError = () => clearError({ redirect: '/' })
 
 ### useSupabaseClient
 
-This composable can be used to make requests to the Supabase API. It's autoimported and ready to use in your components. It's using [supabase-js](https://github.com/supabase/supabase-js/) under the hood, it gives access to the [Supabase client](https://supabase.com/docs/reference/javascript/initializing) and all of its features.
+This composable can be used to make requests to the Supabase API. It's auto-imported and ready to use in your components. It's using [supabase-js](https://github.com/supabase/supabase-js/) under the hood, it gives access to the [Supabase client](https://supabase.com/docs/reference/javascript/initializing) and all of its features.
 
 #### Database Request
 
@@ -302,7 +302,7 @@ Based on [Supabase Realtime](https://github.com/supabase/realtime), listen to ch
 
 To enable it, make sure you have turned on the [Realtime API](https://supabase.com/docs/guides/api#realtime-api) for your table.
 
-Then, listen to changes directly in your vue page / component:
+Then, listen to changes directly in your Vue page / component:
 
 ```vue
 <script setup lang="ts">
@@ -348,7 +348,7 @@ const client = useSupabaseClient<Database>()
 
 #### Authentication Client
 
-The useSupabaseClient composable is providing all methods to manage authorization under `useSupabaseClient().auth`. For more details please see the [supabase-js auth documentation](https://supabase.com/docs/reference/javascript/auth-api). Here is an example for signing in and out:
+The `useSupabaseClient` composable is providing all methods to manage authorization under `useSupabaseClient().auth`. For more details please see the [supabase-js auth documentation](https://supabase.com/docs/reference/javascript/auth-api). Here is an example for signing in and out:
 
 > ⚠️ If you want a full explanation on how to handle the authentication process, please read this [section](#authentication).
 
@@ -395,7 +395,7 @@ export default eventHandler(async event => {
 
 ### supabaseServiceRole
 
-Make requests with super admin rights to the Supabase API with the `supabaseServiceRole` service. This function is designed to work only in [server routes](https://nuxt.com/docs/guide/directory-structure/server#server-routes), there is no vue composable equivalent.
+Make requests with super admin rights to the Supabase API with the `supabaseServiceRole` service. This function is designed to work only in [server routes](https://nuxt.com/docs/guide/directory-structure/server#server-routes), there is no Vue composable equivalent.
 
 It provides similar functionality as the `supabaseServerClient` but it provides a client with super admin rights that can bypass your [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security).
 
@@ -416,3 +416,6 @@ export default eventHandler(async event => {
   return { sensitiveData: data }
 })
 ```
+
+ <!-- markdownlint-disable-file MD013 -->
+ <!-- markdownlint-disable-file MD033 -->
