@@ -5,7 +5,7 @@ export default defineNuxtPlugin({
   name: 'middleware-auth-redirect',
   setup() {
     addRouteMiddleware(
-      '02-global-auth-redirect',
+      '01-global-auth-redirect',
       defineNuxtRouteMiddleware(async to => {
         const config = useRuntimeConfig().public.supabase
         const { login, exclude } = config.redirectOptions
@@ -19,7 +19,7 @@ export default defineNuxtPlugin({
 
         const user = await useSupabaseUser()
         if (!user) {
-          return navigateTo('/login')
+          return navigateTo('/login', { redirectCode: 302 })
         }
       }),
       { global: true },
