@@ -44,29 +44,34 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.10.0",
-    "@supabase/ssr": "^0.1.0",
-    "@supabase/supabase-js": "^2.39.3",
+    "@nuxt/kit": "^3.12.2",
+    "@supabase/ssr": "^0.4.0",
+    "@supabase/supabase-js": "^2.44.2",
     "defu": "^6.1.4"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^1.0.8",
-    "@nuxt/eslint-config": "^0.2.0",
-    "@nuxt/module-builder": "^0.5.5",
-    "@nuxt/schema": "^3.10.0",
-    "@nuxt/test-utils": "^3.11.0",
-    "@types/node": "^20.11.15",
-    "@vue/test-utils": "^2.4.4",
+    "@nuxt/devtools": "^1.3.7",
+    "@nuxt/eslint-config": "^0.3.13",
+    "@nuxt/module-builder": "^0.8.1",
+    "@nuxt/schema": "^3.12.2",
+    "@nuxt/test-utils": "^3.13.1",
+    "@types/node": "^20.14.9",
+    "@vue/test-utils": "^2.4.6",
     "changelogen": "^0.5.5",
-    "eslint": "^8.56.0",
+    "eslint": "^9.6.0",
     "eslint-config-prettier": "^9.1.0",
-    "happy-dom": "^13.3.8",
-    "nuxt": "^3.10.0",
-    "playwright-core": "^1.41.1",
-    "prettier": "^3.2.4",
-    "release-it": "^17.0.3",
-    "typescript": "^5.3.3",
-    "vitest": "^1.2.2",
-    "vue-tsc": "^1.8.27"
+    "happy-dom": "^14.12.3",
+    "nuxt": "^3.12.2",
+    "playwright-core": "^1.45.0",
+    "prettier": "^3.3.2",
+    "release-it": "^17.4.1",
+    "typescript": "^5.5.2",
+    "vitest": "^1.6.0",
+    "vue-tsc": "^2.0.24"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite-plugin-checker": "0.7.0"
+    }
   }
 }
