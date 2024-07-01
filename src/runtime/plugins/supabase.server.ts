@@ -1,6 +1,6 @@
 import { defineNuxtPlugin, useRuntimeConfig, useRequestEvent } from 'nuxt/app'
 import { createServerClient } from '@supabase/ssr'
-import { getCookie, setCookie } from 'h3'
+import { setCookie, parseCookies } from 'h3'
 
 export default defineNuxtPlugin({
   name: 'supabase',
@@ -11,14 +11,15 @@ export default defineNuxtPlugin({
 
     const supabaseServerClient = createServerClient(url, key, {
       cookies: {
-        get(name: string) {
-          return getCookie(event!, name)
+        getAll: async () => {
+          const cookies = parseCookies(event!)
+          return Object.entries(cookies).map(([name, value]) => ({ name, value }))
         },
-        set(name: string, value: string) {
-          setCookie(event!, name, value, cookieOptions)
-        },
-        remove(key, options) {
-          setCookie(event!, key, '', { ...options, expires: 0 })
+        setAll: async cookiesToSet => {
+          // set the cookies exactly as they appear in the cookiesToSet array
+          cookiesToSet.forEach(({ name, value, options }) => {
+            setCookie(event!, name, value, { ...cookieOptions, ...options })
+          })
         },
       },
       cookieOptions: cookieOptions,
