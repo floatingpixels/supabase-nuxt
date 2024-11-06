@@ -1,14 +1,16 @@
 export default defineNuxtConfig({
   modules: ['../src/module'],
-  supabase: {
-    redirect: true,
-  },
+
   devtools: { enabled: false },
-  vue: {
-    propsDestructure: true,
-  },
+
+  compatibilityDate: '2024-11-03',
+
   typescript: {
     typeCheck: true,
     strict: true,
+  },
+
+  supabase: {
+    redirect: true,
   },
 })

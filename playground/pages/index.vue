@@ -5,7 +5,7 @@ const supabase = useSupabaseClient()
 // } = await supabase.auth.getUser()
 const user = await useSupabaseUser()
 
-const { data: clientData } = await supabase.from('test').select('*')
+const { data: clientData } = await supabase.from('posts').select('title, content, comments ( content, member_id )')
 const { data: serverData } = await useFetch('/api/test')
 
 const signOut = async () => {
@@ -13,6 +13,7 @@ const signOut = async () => {
   if (error) console.log(error)
 }
 </script>
+
 <template>
   <div>
     <div>

@@ -1,9 +1,10 @@
 {
-  description = "Development environment for Nuxt.js project with Node.js and TypeScript";
+  description =
+    "Development environment for Nuxt.js project with Node.js and TypeScript";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-24.05";
-    # nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    # nixpkgs.url = "nixpkgs/nixos-24.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -12,16 +13,14 @@
       let
         # pkgs = nixpkgs.legacyPackages.${system};
         pkgs = import nixpkgs { inherit system; };
-      in
-      {
+      in {
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
-            nodejs_22 # Node.js
-            nodePackages.pnpm # PNPM package manager
+            nodejs_20 # Node.js
+            pnpm
             nodePackages."@antfu/ni"
             typescript
           ];
         };
-      }
-    );
+      });
 }

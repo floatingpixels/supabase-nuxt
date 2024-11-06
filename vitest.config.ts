@@ -1,9 +1,20 @@
-/// <reference types="vitest" />
-import { defineConfig } from 'vite'
+import { defineVitestConfig } from '@nuxt/test-utils/config'
+import { fileURLToPath } from 'node:url'
 
-export default defineConfig({
+export default defineVitestConfig({
   test: {
-    testTimeout: 10000,
-    // environmentOptions: { nuxt: { domEnvironment: 'jsdom' } },
+    include: ['./test/**/*.spec.ts', './test/**/*.test.ts'],
+    exclude: ['**/playwright/**'],
+    coverage: {
+      exclude: ['**/.nuxt', 'node_modules', 'playground', 'test'],
+    },
+    environmentOptions: {
+      nuxt: {
+        rootDir: fileURLToPath(new URL('./playground', import.meta.url)),
+        dotenv: {
+          fileName: '.env',
+        },
+      },
+    },
   },
 })

@@ -5,5 +5,6 @@ export default defineNuxtConfig({
   supabase: {
     url: process.env.SUPABASE_URL as string,
     key: process.env.SUPABASE_KEY as string,
+    redirect: true,
   },
 })

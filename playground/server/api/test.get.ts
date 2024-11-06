@@ -7,7 +7,7 @@ export default defineEventHandler(async event => {
     throw createError({ statusMessage: 'Supabase client not found' })
   }
 
-  const { data, error } = await supabase.from('test').select('*')
+  const { data, error } = await supabase.from('posts').select('title, content, comments ( content, member_id )')
 
   if (error) {
     throw createError({ statusMessage: error?.message })
