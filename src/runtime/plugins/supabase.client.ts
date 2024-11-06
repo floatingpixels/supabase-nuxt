@@ -10,7 +10,6 @@ export default defineNuxtPlugin({
 
     const supabaseBrowserClient = createBrowserClient(url, key, {
       cookieOptions: cookieOptions,
-      isSingleton: true,
     })
 
     return {

@@ -7,96 +7,10 @@ import {
   addServerHandler,
 } from '@nuxt/kit'
 import { defu } from 'defu'
-// import type { ModuleOptions } from './runtime/types'
-import type { SupabaseClientOptions } from '@supabase/supabase-js'
-import type { CookieOptions } from 'nuxt/app'
+import type { ModuleOptions } from './types/module'
 
-interface RedirectOptions {
-  /**
-   * Login route
-   * @default '/login'
-   * @type string
-   */
-  login?: string
-  /**
-   * Routes to exclude from redirection
-   * @default []
-   * @type string[]
-   */
-  exclude?: string[]
-}
-interface ModuleOptions {
-  /**
-   * Supabase API URL
-   * @default process.env.SUPABASE_URL
-   * @example 'https://*.supabase.co'
-   * @type string
-   * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
-   */
-  url: string
+export * from './types/module'
 
-  /**
-   * Supabase Client API Key
-   * @default process.env.SUPABASE_KEY
-   * @example '123456789'
-   * @type string
-   * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
-   */
-  key: string
-
-  /**
-   * Supabase Service key
-   * @default process.env.SUPABASE_SERVICE_KEY
-   * @example '123456789'
-   * @type string
-   * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
-   */
-  serviceKey?: string
-
-  /**
-   * Redirect automatically to login page if user is not authenticated
-   * @default `false`
-   * @type boolean
-   */
-  redirect?: boolean
-
-  /**
-   * Redirection options, set routes for login and specify pages to exclude from redirection
-   * @default
-   * {
-      login: '/login',
-      exclude: [],
-    }
-   * @type RedirectOptions
-   */
-  redirectOptions?: RedirectOptions
-
-  /**
-   * Cookie options
-   * @default {
-      maxAge: 60 * 60 * 8,
-      sameSite: 'lax',
-      secure: true,
-    }
-   * @type CookieOptions
-   * @docs https://nuxt.com/docs/api/composables/use-cookie#options
-   */
-  cookieOptions?: CookieOptions
-
-  /**
-   * Supabase Client options
-   * @default {
-      auth: {
-        flowType: 'pkce',
-        detectSessionInUrl: true,
-        persistSession: true,
-      },
-    }
-   * @type object
-   * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
-   */
-  clientOptions?: SupabaseClientOptions<string>
-}
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'supabase-nuxt',
@@ -119,7 +33,7 @@ export default defineNuxtModule<ModuleOptions>({
       maxAge: 60 * 60 * 8,
       sameSite: 'lax',
       secure: true,
-    } as CookieOptions,
+    },
     clientOptions: {
       auth: {
         flowType: 'pkce',
@@ -127,7 +41,7 @@ export default defineNuxtModule<ModuleOptions>({
         persistSession: true,
         autoRefreshToken: true,
       },
-    } as SupabaseClientOptions<string>,
+    },
   },
 
   setup(options, nuxt) {
@@ -181,7 +95,7 @@ export default defineNuxtModule<ModuleOptions>({
       dirs.push(resolve('./runtime/composables'))
     })
 
-    //Add route middleware plugin for redirect
+    // Add route middleware plugin for redirect
     if (options.redirect) {
       addPlugin(resolve('./runtime/plugins/middleware-auth-redirect'))
     }
