@@ -19,7 +19,6 @@
             nodejs_20 # Node.js
             pnpm
             nodePackages."@antfu/ni"
-            typescript
           ];
         };
       });
