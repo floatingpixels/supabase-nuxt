@@ -47,7 +47,7 @@ async function createUsers(n: number = 1) {
     if (data?.user) users.push(data.user)
   }
 
-  await seed.members(x => x(users.length, ({ index }) => ({ username: `user${index}`, user_id: users[index].id })))
+  await seed.members(x => x(users.length, ({ index }) => ({ username: `user${index + 1}`, user_id: users[index].id })))
 
   return users
 }
