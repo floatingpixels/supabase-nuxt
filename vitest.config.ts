@@ -6,7 +6,7 @@ export default defineVitestConfig({
     include: ['./test/**/*.spec.ts', './test/**/*.test.ts'],
     exclude: ['**/playwright/**'],
     coverage: {
-      exclude: ['**/.nuxt', 'node_modules', 'playground', 'test'],
+      exclude: ['**/.nuxt/**', '**/.output/**', '**/node_modules/**', '**/types/**', 'nuxt.config.ts'],
     },
     environmentOptions: {
       nuxt: {

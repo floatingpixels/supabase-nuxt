@@ -20,16 +20,17 @@ const signOut = async () => {
       <h2>User</h2>
       <div>User ID:{{ user?.id }}</div>
       <div>E-Mail: {{ user?.email }}</div>
+      <pre data-testid="user-data">{{ user }}</pre>
       <button @click="signOut">Sign out</button>
     </div>
     <div>
       <h2>Data</h2>
       <div>
         <div>Data from browser query (client side)</div>
-        <pre>{{ clientData }}</pre>
+        <pre data-testid="client-data">{{ clientData }}</pre>
       </div>
       <div>Data from server API (server side)</div>
-      <pre>{{ serverData }}</pre>
+      <pre data-testid="server-data">{{ serverData }}</pre>
     </div>
   </div>
 </template>

@@ -1,8 +1,8 @@
 // @vitest-environment nuxt
 import { describe, expect, it } from 'vitest'
-import { useSupabaseClient, useRuntimeConfig } from '#imports'
+import { useSupabaseClient, useSupabaseUser, useRuntimeConfig } from '#imports'
 
-describe('auth', () => {
+describe('auth', { concurrent: false, sequential: true }, () => {
   const supabase = useSupabaseClient()
 
   it('has a working runtime', () => {
@@ -27,5 +27,28 @@ describe('auth', () => {
     expect(data?.user).toBeDefined()
     expect(data?.session).toBeDefined()
     expect(data?.user?.email).toBe('user1@example.com')
+  })
+
+  //BUG: This test fails in vitest, but works in playwright test, probably because cookies are not set
+  it.skip('can get user', async () => {
+    await supabase.auth.signOut()
+    let user = await useSupabaseUser()
+    expect(user).toBeNull()
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: 'user1@example.com',
+      password: 'password',
+    })
+    expect(error).toBeNull()
+    expect(data).not.toBeNull()
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    expect(session).not.toBeNull()
+
+    user = await useSupabaseUser()
+    expect(user).not.toBeNull()
+    expect(user?.email).toBe('user1@example.com')
   })
 })
