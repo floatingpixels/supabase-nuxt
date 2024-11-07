@@ -1,6 +1,6 @@
 {
   "name": "@floatingpixels/supabase-nuxt",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Supabase module for Nuxt",
   "repository": "floatingpixels/supabase-nuxt",
   "license": "MIT",
@@ -42,7 +42,7 @@
     "lint": "eslint .",
     "test": "nuxi prepare playground && pnpm vitest",
     "test:watch": "vitest watch",
-    "test:pw": "playwright test test/playwright/ --ui",
+    "test:pw": "playwright test test/playwright/",
     "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
     "supa": "./node_modules/supabase/bin/supabase",
     "db:fullreset": "pnpm run --silent db:reset && pnpm run --silent db:types && pnpm run --silent db:sync && pnpm run --silent db:seed",
