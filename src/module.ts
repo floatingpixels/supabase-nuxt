@@ -133,7 +133,7 @@ export default defineNuxtModule<ModuleOptions>({
       config.optimizeDeps = defu(typeof config.optimizeDeps === 'object' ? config.optimizeDeps : {}, {
         include: [
           '@supabase/functions-js',
-          '@supabase/gotrue-js',
+          '@supabase/auth-js',
           '@supabase/postgrest-js',
           '@supabase/realtime-js',
           '@supabase/storage-js',
