@@ -67,7 +67,7 @@ export interface ModuleOptions {
    * @default {
       maxAge: 60 * 60 * 8,
       sameSite: 'lax',
-      secure: true,
+      secure: false,
     }
    * @type CookieOptions
    * @docs https://nuxt.com/docs/api/composables/use-cookie#options

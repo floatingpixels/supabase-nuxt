@@ -9,7 +9,7 @@ import {
 import { defu } from 'defu'
 import type { ModuleOptions } from './types/module'
 
-export * from './types/module'
+export * from './types'
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -32,7 +32,7 @@ export default defineNuxtModule<ModuleOptions>({
     cookieOptions: {
       maxAge: 60 * 60 * 8,
       sameSite: 'lax',
-      secure: true,
+      secure: false,
     },
     clientOptions: {
       auth: {
@@ -49,10 +49,10 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Make sure url and key are set
     if (!options.url) {
-      console.warn('Missing `SUPABASE_URL` in `.env`')
+      console.warn('Missing `SUPABASE_URL` in environmewnt')
     }
     if (!options.key) {
-      console.warn('Missing `SUPABASE_KEY` in `.env`')
+      console.warn('Missing `SUPABASE_KEY` in environment')
     }
 
     // Public runtimeConfig
@@ -62,10 +62,8 @@ export default defineNuxtModule<ModuleOptions>({
       redirect: options.redirect,
       redirectOptions: options.redirectOptions,
       clientOptions: options.clientOptions,
+      cookieOptions: options.cookieOptions,
     })
-
-    nuxt.options.runtimeConfig.public.supabase.cookieOptions =
-      nuxt.options.runtimeConfig.public.supabase.cookieOptions || options.cookieOptions
 
     // Private runtimeConfig
     nuxt.options.runtimeConfig.supabase = defu(nuxt.options.runtimeConfig.supabase, {
