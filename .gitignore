@@ -34,6 +34,7 @@ coverage
 *.lcov
 .nyc_output
 test-results
+playwright*/
 
 # VSCode
 .vscode/*
