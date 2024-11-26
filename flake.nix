@@ -11,12 +11,12 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        # pkgs = nixpkgs.legacyPackages.${system};
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = nixpkgs.legacyPackages.${system};
+        # pkgs = import nixpkgs { inherit system; };
       in {
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
-            nodejs_20 # Node.js
+            nodejs_22 # Node.js
             pnpm
             nodePackages."@antfu/ni"
           ];
