@@ -43,6 +43,7 @@
     "test": "nuxi prepare playground && pnpm vitest",
     "test:watch": "vitest watch",
     "test:pw": "playwright test test/playwright/",
+    "test:e2e": "pnpm run --silent db:start && pnpm run --silent db:fullreset && pnpm run --silent test:pw && pnpm run --silent db:stop",
     "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
     "supa": "./node_modules/supabase/bin/supabase",
     "db:fullreset": "pnpm run --silent db:reset && pnpm run --silent db:types && pnpm run --silent db:sync && pnpm run --silent db:seed",
@@ -64,7 +65,7 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "^1.6.1",
-    "@nuxt/eslint-config": "^0.7.1",
+    "@nuxt/eslint-config": "^0.7.2",
     "@nuxt/module-builder": "^0.8.4",
     "@nuxt/schema": "^3.14.1592",
     "@nuxt/test-utils": "^3.14.4",
@@ -72,7 +73,7 @@
     "@snaplet/copycat": "^5.1.0",
     "@snaplet/seed": "^0.98.0",
     "@types/eslint-config-prettier": "^6.11.3",
-    "@types/node": "^22.9.1",
+    "@types/node": "^22.10.0",
     "@vitest/coverage-v8": "2.1.5",
     "@vue/test-utils": "^2.4.6",
     "changelogen": "^0.5.7",
@@ -82,10 +83,10 @@
     "nuxt": "^3.14.1592",
     "playwright-core": "^1.49.0",
     "postgres": "^3.4.5",
-    "prettier": "^3.3.3",
+    "prettier": "^3.4.0",
     "release-it": "^17.10.0",
     "supabase": "^1.223.10",
-    "typescript": "^5.6.3",
+    "typescript": "5.6.3",
     "vitest": "^2.1.5",
     "vue-tsc": "^2.1.10"
   }
