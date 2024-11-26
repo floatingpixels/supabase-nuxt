@@ -7,7 +7,7 @@ import {
   addServerHandler,
 } from '@nuxt/kit'
 import { defu } from 'defu'
-import type { ModuleOptions } from './types/module'
+import type { ModuleOptions } from './types'
 
 export * from './types'
 
@@ -28,11 +28,6 @@ export default defineNuxtModule<ModuleOptions>({
     redirectOptions: {
       login: '/login',
       exclude: [],
-    },
-    cookieOptions: {
-      maxAge: 60 * 60 * 8,
-      sameSite: 'lax',
-      secure: false,
     },
     clientOptions: {
       auth: {
@@ -62,7 +57,6 @@ export default defineNuxtModule<ModuleOptions>({
       redirect: options.redirect,
       redirectOptions: options.redirectOptions,
       clientOptions: options.clientOptions,
-      cookieOptions: options.cookieOptions,
     })
 
     // Private runtimeConfig

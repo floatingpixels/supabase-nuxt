@@ -91,18 +91,6 @@ Default:
 - `login`: User will be redirected to this route if not authenticated or after logout.
 - `exclude`: Routes to exclude from the re-direct. `['/foo', '/bar/*']` will exclude the `foo` page and all pages in your `bar` folder.
 
-### cookieOptions
-
-```ts
-  cookieOptions: {
-    maxAge: 60 * 60 * 8,
-    sameSite: 'lax',
-    secure: true
-  }
-```
-
-Options for cookies used for authentication and session management, refer to [cookieOptions](https://nuxt.com/docs/api/composables/use-cookie#options) for available settings. Please note that the lifetime set here does not determine the Supabase session lifetime.
-
 ### `clientOptions`
 
 Default:

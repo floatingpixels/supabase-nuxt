@@ -6,11 +6,9 @@ export default defineNuxtPlugin({
   enforce: 'pre',
   async setup() {
     const config = useRuntimeConfig().public.supabase
-    const { url, key, cookieOptions } = config
+    const { url, key } = config
 
-    const supabaseBrowserClient = createBrowserClient(url, key, {
-      cookieOptions: cookieOptions,
-    })
+    const supabaseBrowserClient = createBrowserClient(url, key)
 
     return {
       provide: {
