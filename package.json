@@ -60,7 +60,7 @@
   "dependencies": {
     "@nuxt/kit": "^3.14.1592",
     "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "2.47.5",
+    "@supabase/supabase-js": "^2.47.8",
     "defu": "^6.1.4"
   },
   "devDependencies": {
@@ -77,7 +77,7 @@
     "@vitest/coverage-v8": "2.1.8",
     "@vue/test-utils": "^2.4.6",
     "changelogen": "^0.5.7",
-    "eslint": "^9.16.0",
+    "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
     "happy-dom": "^15.11.7",
     "nuxt": "^3.14.1592",
@@ -85,7 +85,7 @@
     "postgres": "^3.4.5",
     "prettier": "^3.4.2",
     "release-it": "^17.10.0",
-    "supabase": "^2.0.0",
+    "supabase": "^2.1.1",
     "typescript": "5.7.2",
     "vitest": "^2.1.8",
     "vue-tsc": "https://pkg.pr.new/vuejs/language-tools/vue-tsc@3fb59af"
