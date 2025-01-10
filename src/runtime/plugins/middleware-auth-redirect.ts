@@ -1,5 +1,5 @@
 import { useSupabaseUser } from '../composables/useSupabaseUser'
-import { defineNuxtPlugin, addRouteMiddleware, defineNuxtRouteMiddleware, useRuntimeConfig, navigateTo } from '#imports'
+import { defineNuxtPlugin, addRouteMiddleware, defineNuxtRouteMiddleware, useRuntimeConfig, navigateTo } from 'nuxt/app'
 import type { RouteLocationNormalized } from 'vue-router'
 
 export default defineNuxtPlugin({
