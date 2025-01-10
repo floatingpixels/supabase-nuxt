@@ -6,9 +6,9 @@ export default defineNuxtPlugin({
   enforce: 'pre',
   async setup() {
     const config = useRuntimeConfig().public.supabase
-    const { url, key } = config
+    const { url, anonKey } = config
 
-    const supabaseBrowserClient = createBrowserClient(url, key)
+    const supabaseBrowserClient = createBrowserClient(url, anonKey)
 
     return {
       provide: {

@@ -6,21 +6,21 @@ import { useRuntimeConfig } from '#imports'
 
 export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
   const {
-    supabase: { serviceKey },
+    supabase: { serviceRoleKey },
     public: {
       supabase: { url },
     },
   } = useRuntimeConfig()
 
   // Make sure service key is set
-  if (!serviceKey) {
+  if (!serviceRoleKey) {
     throw new Error('Missing `SUPABASE_SERVICE_KEY` in `.env`')
   }
 
   let supabaseClient = event.context._supabaseServiceRole as SupabaseClient<T>
 
   if (!supabaseClient) {
-    supabaseClient = createServerClient(url, serviceKey, {
+    supabaseClient = createServerClient(url, serviceRoleKey, {
       cookies: {
         getAll: async () => {
           return parseCookieHeader(getHeader(event, 'Cookie') ?? '')

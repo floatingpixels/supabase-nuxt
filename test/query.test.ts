@@ -1,13 +1,15 @@
 // @vitest-environment nuxt
 import { beforeAll, describe, expect, it } from 'vitest'
+import { setup } from '@nuxt/test-utils/e2e'
 import { useSupabaseClient } from '#imports'
 import type { Database } from '../playground/types/supabase'
 
-//BUG: This test fails in vitest, but works in playwright test, probably because cookies are not set
-describe.skip('queries', () => {
+describe('queries', () => {
   const supabase = useSupabaseClient<Database>()
 
   beforeAll(async () => {
+    await setup()
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: 'user1@example.com',
       password: 'password',

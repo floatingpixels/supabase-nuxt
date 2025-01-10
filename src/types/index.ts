@@ -4,8 +4,8 @@ declare module '@nuxt/schema' {
   interface PublicRuntimeConfig {
     supabase: {
       url: string
-      key: string
-      serviceKey: string
+      anonKey: string
+      serviceRoleKey: string
       redirect: boolean
       redirectOptions: RedirectOptions
       clientOptions: SupabaseClientOptions<string>
@@ -45,7 +45,7 @@ export interface ModuleOptions {
    * @type string
    * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
    */
-  key: string
+  anonKey: string
 
   /**
    * Supabase Service key
@@ -54,7 +54,7 @@ export interface ModuleOptions {
    * @type string
    * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
    */
-  serviceKey?: string
+  serviceRoleKey?: string
 
   /**
    * Redirect automatically to login page if user is not authenticated

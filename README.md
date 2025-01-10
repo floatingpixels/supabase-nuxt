@@ -31,14 +31,16 @@ export default defineNuxtConfig({
 })
 ```
 
-Add `SUPABASE_URL` and `SUPABASE_KEY` to the `.env`:
+Add `SUPABASE_URL` and `SUPABASE_ANON_KEY` to `.env`:
 
 ```zsh
-SUPABASE_URL="https://example.supabase.co"
-SUPABASE_KEY="<your_key>"
+NUXT_PUBLIC_SUPABASE_URL="https://example.supabase.co"
+NUXT_PUBLIC_SUPABASE_ANON_KEY=""
 ```
 
-Alternatively, you can prefix the environment variables with `NUXT_PUBLIC_` in order to use `runtimeConfig`.
+When dynamically setting the variables during in an environment, make sure to prefix the environment variables with `NUXT_PUBLIC_` in order to use `runtimeConfig`.
+
+The public keys are required to be set in the environment for the module to work. If the service role is needed, you should also set `NUXT_SUPABASE_SERVICE_ROLE_KEY` in the environment, which will be only available on the server side as a private runtime variable.
 
 ## Options
 
@@ -55,19 +57,19 @@ export default defineNuxtConfig({
 
 ### `url`
 
-Default: `process.env.SUPABASE_URL` (ex: `https://example.supabase.co`)
+Default: `process.env.NUXT_PUBLIC_SUPABASE_URL` (e.g.: `https://example.supabase.co`)
 
 The unique Supabase URL which is supplied when you create a new project in your project dashboard.
 
 ### `key`
 
-Default: `process.env.SUPABASE_KEY`
+Default: `process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY`
 
 Supabase 'anon key', used to bypass the Supabase API gateway and interact with your Supabase database making use of user JWT to apply RLS Policies.
 
 ### `serviceKey`
 
-Default: `process.env.SUPABASE_SERVICE_KEY`
+Default: `process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY`
 
 Supabase 'service role key', has super admin rights and can bypass your Row Level Security.
 
@@ -387,7 +389,7 @@ Make requests with super admin rights to the Supabase API with the `supabaseServ
 
 It provides similar functionality as the `supabaseServerClient` but it provides a client with super admin rights that can bypass your [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security).
 
-The client is initialized with the `SUPABASE_SERVICE_KEY` you must have in your `.env` file. Checkout the doc if you want to know more about [Supabase keys](https://supabase.com/docs/learn/auth-deep-dive/auth-deep-dive-jwts#jwts-in-supabase).
+The client is initialized with the `SUPABASE_SERVICE_ROLE_KEY` you must have in your environment. Checkout the doc if you want to know more about [Supabase keys](https://supabase.com/docs/learn/auth-deep-dive/auth-deep-dive-jwts#jwts-in-supabase).
 
 > ⚠️ The service key gives admin access to your database, be careful to not expose it in your client side code or in your git repository.
 

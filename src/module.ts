@@ -21,9 +21,9 @@ export default defineNuxtModule<ModuleOptions>({
   },
   // Default configuration options of the Nuxt module
   defaults: {
-    url: process.env.SUPABASE_URL as string,
-    key: process.env.SUPABASE_KEY as string,
-    serviceKey: process.env.SUPABASE_SERVICE_KEY as string,
+    url: process.env.NUXT_PUBLIC_SUPABASE_URL as string,
+    anonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY as string,
+    serviceRoleKey: process.env.NUXT_SUPABASE_SERVICE_ROLE as string,
     redirect: false,
     redirectOptions: {
       login: '/login',
@@ -44,16 +44,16 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Make sure url and key are set
     if (!options.url) {
-      console.warn('Missing `SUPABASE_URL` in environmewnt')
+      console.warn('Missing `SUPABASE_URL` in environment')
     }
-    if (!options.key) {
-      console.warn('Missing `SUPABASE_KEY` in environment')
+    if (!options.anonKey) {
+      console.warn('Missing `SUPABASE_ANON_KEY` in environment')
     }
 
     // Public runtimeConfig
     nuxt.options.runtimeConfig.public.supabase = defu(nuxt.options.runtimeConfig.public.supabase, {
       url: options.url,
-      key: options.key,
+      anonKey: options.anonKey,
       redirect: options.redirect,
       redirectOptions: options.redirectOptions,
       clientOptions: options.clientOptions,
@@ -61,7 +61,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Private runtimeConfig
     nuxt.options.runtimeConfig.supabase = defu(nuxt.options.runtimeConfig.supabase, {
-      serviceKey: options.serviceKey,
+      serviceRoleKey: options.serviceRoleKey,
     })
 
     // inject server route to handle email confirmation in PKCE flow
