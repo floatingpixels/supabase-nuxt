@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServerClient, parseCookieHeader } from '@supabase/ssr'
 import type { H3Event } from 'h3'
 import { setCookie, getHeader } from 'h3'
-import { useRuntimeConfig } from 'nuxt/app'
+import { useRuntimeConfig } from '#imports'
 
 export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
   const {
