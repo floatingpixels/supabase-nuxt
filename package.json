@@ -55,7 +55,8 @@
     "db:reset": "pnpm run --silent supa db reset",
     "db:seed": "npx tsx seed.ts",
     "db:sync": "npx @snaplet/seed sync",
-    "db:fullseed": "(npx @snaplet/seed sync) -and (npx tsx seed.ts)"
+    "db:fullseed": "(npx @snaplet/seed sync) -and (npx tsx seed.ts)",
+    "db:dump": "pg_dump -a -h localhost -U postgres -p 54322 -f ./supabase/seed.sql --schema=public --schema=auth --inserts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
