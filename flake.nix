@@ -19,6 +19,7 @@
             nodejs_22 # Node.js
             pnpm
             nodePackages."@antfu/ni"
+            postgresql_15
           ];
         };
       });
