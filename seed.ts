@@ -18,7 +18,7 @@ async function createData() {
 }
 
 async function createUsers(n: number = 1) {
-  const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_KEY!)
+  const supabase = createClient(process.env.NUXT_PUBLIC_SUPABASE_URL!, process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY!)
   const PASSWORD = 'password'
 
   const users = [] as { id: string }[]
