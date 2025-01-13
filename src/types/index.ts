@@ -5,7 +5,6 @@ declare module '@nuxt/schema' {
     supabase: {
       url: string
       anonKey: string
-      serviceRoleKey: string
       redirect: boolean
       redirectOptions: RedirectOptions
       clientOptions: SupabaseClientOptions<string>
@@ -31,25 +30,22 @@ export interface RedirectOptions {
 export interface ModuleOptions {
   /**
    * Supabase API URL
-   * @default process.env.SUPABASE_URL
    * @example 'https://*.supabase.co'
    * @type string
    * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
    */
-  url: string
+  url?: string
 
   /**
    * Supabase Client API Key
-   * @default process.env.SUPABASE_KEY
    * @example '123456789'
    * @type string
    * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
    */
-  anonKey: string
+  anonKey?: string
 
   /**
    * Supabase Service key
-   * @default process.env.SUPABASE_SERVICE_KEY
    * @example '123456789'
    * @type string
    * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
@@ -84,7 +80,7 @@ export interface ModuleOptions {
       },
     }
    * @type object
-   * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
+   *@docs https://supabase.com/docs/reference/javascript/initializing#parameters
    */
   clientOptions?: SupabaseClientOptions<string>
 }

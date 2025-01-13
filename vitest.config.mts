@@ -5,14 +5,11 @@ export default defineVitestConfig({
   test: {
     include: ['./test/**/*.spec.ts', './test/**/*.test.ts'],
     exclude: ['**/playwright/**'],
-    coverage: {
-      exclude: ['**/.nuxt/**', '**/.output/**', '**/node_modules/**', '**/types/**', 'nuxt.config.ts'],
-    },
     environmentOptions: {
       nuxt: {
         rootDir: fileURLToPath(new URL('./playground', import.meta.url)),
         dotenv: {
-          fileName: '.env',
+          fileName: 'dev.env',
         },
       },
     },

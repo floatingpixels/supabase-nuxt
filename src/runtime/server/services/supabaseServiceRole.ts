@@ -14,7 +14,7 @@ export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseCl
 
   // Make sure service key is set
   if (!serviceRoleKey) {
-    throw new Error('Missing `SUPABASE_SERVICE_KEY` in `.env`')
+    throw new Error('Missing `SUPABASE_SERVICE_ROLE_KEY` in `.env`')
   }
 
   let supabaseClient = event.context._supabaseServiceRole as SupabaseClient<T>

@@ -4,11 +4,11 @@ import { setup } from '@nuxt/test-utils/e2e'
 import { useSupabaseClient } from '#imports'
 import type { Database } from '../playground/types/supabase'
 
-describe('queries', () => {
+describe('user queries', () => {
   const supabase = useSupabaseClient<Database>()
 
   beforeAll(async () => {
-    await setup()
+    await setup({ server: true })
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: 'user1@example.com',

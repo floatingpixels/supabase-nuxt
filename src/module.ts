@@ -6,7 +6,6 @@ import {
   createResolver,
   addServerHandler,
 } from '@nuxt/kit'
-import { defu } from 'defu'
 import type { ModuleOptions } from './types'
 
 export * from './types'
@@ -19,11 +18,10 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt: '>3.0.0',
     },
   },
-  // Default configuration options of the Nuxt module
   defaults: {
-    url: process.env.NUXT_PUBLIC_SUPABASE_URL as string,
-    anonKey: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY as string,
-    serviceRoleKey: process.env.NUXT_SUPABASE_SERVICE_ROLE as string,
+    url: undefined,
+    anonKey: undefined,
+    serviceRoleKey: undefined,
     redirect: false,
     redirectOptions: {
       login: '/login',
@@ -42,27 +40,25 @@ export default defineNuxtModule<ModuleOptions>({
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
 
-    // Make sure url and key are set
-    if (!options.url) {
-      console.warn('Missing `SUPABASE_URL` in environment')
+    // Make sure url and key are set either in environment or module options
+    if (!process.env.NUXT_PUBLIC_SUPABASE_URL && !options.url) {
+      console.warn('Missing `NUXT_PUBLIC_SUPABASE_URL` in environment or `url` in module options')
     }
-    if (!options.anonKey) {
-      console.warn('Missing `SUPABASE_ANON_KEY` in environment')
+    if (!process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY && !options.anonKey) {
+      console.warn('Missing `NUXT_PUBLIC_SUPABASE_ANON_KEY` in environment or `anonKey` in module options')
     }
 
-    // Public runtimeConfig
-    nuxt.options.runtimeConfig.public.supabase = defu(nuxt.options.runtimeConfig.public.supabase, {
-      url: options.url,
-      anonKey: options.anonKey,
-      redirect: options.redirect,
-      redirectOptions: options.redirectOptions,
-      clientOptions: options.clientOptions,
-    })
+    nuxt.options.runtimeConfig.public.supabase = {
+      url: options.url!,
+      anonKey: options.anonKey!,
+      redirect: options.redirect!,
+      redirectOptions: options.redirectOptions!,
+      clientOptions: options.clientOptions!,
+    }
 
-    // Private runtimeConfig
-    nuxt.options.runtimeConfig.supabase = defu(nuxt.options.runtimeConfig.supabase, {
+    nuxt.options.runtimeConfig.supabase = {
       serviceRoleKey: options.serviceRoleKey,
-    })
+    }
 
     // inject server route to handle email confirmation in PKCE flow
     addServerHandler({
@@ -97,9 +93,9 @@ export default defineNuxtModule<ModuleOptions>({
       nitroConfig.alias = nitroConfig.alias || {}
       nitroConfig.alias['#supabase/server'] = resolve('./runtime/server/services')
       // Inline module runtime in Nitro bundle
-      nitroConfig.externals = defu(typeof nitroConfig.externals === 'object' ? nitroConfig.externals : {}, {
-        inline: [resolve('./runtime')],
-      })
+      if (!nitroConfig.externals) nitroConfig.externals = {}
+      if (!nitroConfig.externals.inline) nitroConfig.externals.inline = []
+      nitroConfig.externals.inline?.push(resolve('./runtime'))
     })
 
     // Add types
@@ -122,7 +118,9 @@ export default defineNuxtModule<ModuleOptions>({
     // Pre-bundle supabase packages to avoid CommonJS import issues with ESM
     // e.g. https://github.com/supabase/auth-helpers/issues/725
     extendViteConfig(config => {
-      config.optimizeDeps = defu(typeof config.optimizeDeps === 'object' ? config.optimizeDeps : {}, {
+      // config.optimizeDeps = defu(typeof config.optimizeDeps === 'object' ? config.optimizeDeps : {}, {
+      config.optimizeDeps = {
+        ...(typeof config.optimizeDeps === 'object' ? config.optimizeDeps : {}),
         include: [
           '@supabase/functions-js',
           '@supabase/auth-js',
@@ -132,7 +130,7 @@ export default defineNuxtModule<ModuleOptions>({
           '@supabase/supabase-js',
           '@supabase/ssr',
         ],
-      })
+      }
     })
   },
 })
