@@ -21,7 +21,7 @@ test('logging in with user and password', async ({ page, goto }) => {
 
 test('redirect to login page when not logged in', async ({ page, goto }) => {
   await goto('/', { waitUntil: 'networkidle' })
-  await expect(page).toHaveURL('/login')
+  await expect(page, { message: 'module option supabase.redirect = true not working' }).toHaveURL('/login')
 })
 
 test('do not redirect when logged in', async ({ page, goto }) => {

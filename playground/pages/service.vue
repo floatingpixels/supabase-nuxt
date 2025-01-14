@@ -5,7 +5,7 @@ const { data } = await useFetch('/api/service')
 <template>
   <div>
     <div>
-      <h2>Data</h2>
+      <h2>Data from API with Service Role</h2>
       <div>Data from server API (server side)</div>
       <pre data-testid="server-data">{{ data }}</pre>
     </div>
