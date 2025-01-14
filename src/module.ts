@@ -90,12 +90,15 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.hook('nitro:config', nitroConfig => {
       // Add supabase to the server context
-      nitroConfig.alias = nitroConfig.alias || {}
-      nitroConfig.alias['#supabase/server'] = resolve('./runtime/server/services')
+      nitroConfig.alias = {
+        ...nitroConfig.alias,
+        '#supabase/server': resolve('./runtime/server/services'),
+      }
       // Inline module runtime in Nitro bundle
-      if (!nitroConfig.externals) nitroConfig.externals = {}
-      if (!nitroConfig.externals.inline) nitroConfig.externals.inline = []
-      nitroConfig.externals.inline?.push(resolve('./runtime'))
+      nitroConfig.externals = {
+        ...nitroConfig.externals,
+        inline: [...(nitroConfig.externals?.inline || []), resolve('./runtime')],
+      }
     })
 
     // Add types
@@ -116,11 +119,20 @@ export default defineNuxtModule<ModuleOptions>({
     })
 
     // Pre-bundle supabase packages to avoid CommonJS import issues with ESM
-    // e.g. https://github.com/supabase/auth-helpers/issues/725
     extendViteConfig(config => {
-      config.optimizeDeps = config.optimizeDeps || {}
-      config.optimizeDeps.include = config.optimizeDeps.include || []
-      config.optimizeDeps.include.push('@supabase/postgrest-js')
+      config.optimizeDeps = {
+        ...config.optimizeDeps,
+        include: [
+          ...(config.optimizeDeps?.include || []),
+          '@supabase/functions-js',
+          '@supabase/auth-js',
+          '@supabase/postgrest-js',
+          '@supabase/realtime-js',
+          '@supabase/storage-js',
+          '@supabase/supabase-js',
+          '@supabase/ssr',
+        ],
+      }
     })
   },
 })
