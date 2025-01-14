@@ -1,4 +1,11 @@
-import { defineNuxtModule, addPlugin, addTypeTemplate, createResolver, addServerHandler } from '@nuxt/kit'
+import {
+  defineNuxtModule,
+  addPlugin,
+  addTypeTemplate,
+  createResolver,
+  addServerHandler,
+  extendViteConfig,
+} from '@nuxt/kit'
 import type { ModuleOptions } from './types'
 
 export * from './types'
@@ -106,6 +113,14 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.hook('prepare:types', options => {
       options.references.push({ path: resolve(nuxt.options.buildDir, 'types/supabase.d.ts') })
+    })
+
+    // Pre-bundle supabase packages to avoid CommonJS import issues with ESM
+    // e.g. https://github.com/supabase/auth-helpers/issues/725
+    extendViteConfig(config => {
+      config.optimizeDeps = config.optimizeDeps || {}
+      config.optimizeDeps.include = config.optimizeDeps.include || []
+      config.optimizeDeps.include.push('@supabase/postgrest-js')
     })
   },
 })
