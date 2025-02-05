@@ -4,7 +4,7 @@ import { supabaseServerClient } from '#supabase/server'
 export default defineEventHandler(async event => {
   const query = getQuery(event)
   const code = query.code as string
-  const next = (query.next as string) ?? '/'
+  const redirect_to = (query.redirect_to as string) ?? '/'
 
   if (!code) {
     throw createError({ statusMessage: 'No code provided' })
@@ -16,5 +16,5 @@ export default defineEventHandler(async event => {
     throw createError({ statusMessage: error.message })
   }
 
-  await sendRedirect(event, next, 302)
+  await sendRedirect(event, redirect_to, 302)
 })
