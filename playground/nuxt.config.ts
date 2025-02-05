@@ -8,6 +8,9 @@ export default defineNuxtConfig({
   },
   supabase: {
     redirect: true,
+    redirectOptions: {
+      exclude: ['/service'],
+    },
   },
   experimental: {
     appManifest: false,
