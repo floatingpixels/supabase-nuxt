@@ -6,7 +6,7 @@ export default defineEventHandler(async event => {
   const query = getQuery(event)
   const token_hash = query.token_hash as string
   const type = query.type as EmailOtpType | null
-  const next = (query.next as string) ?? '/'
+  const redirect_to = (query.redirect_to as string) ?? '/'
   if (!token_hash || !type) {
     throw createError({ statusMessage: 'Invalid token' })
   }
@@ -18,5 +18,5 @@ export default defineEventHandler(async event => {
     throw createError({ statusMessage: error.message })
   }
 
-  await sendRedirect(event, next, 302)
+  await sendRedirect(event, redirect_to, 302)
 })
