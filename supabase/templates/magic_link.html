@@ -1,0 +1,7 @@
+<h2>Magic Link Custom Template</h2>
+<p>Hello {{ .Data.first_name }}</p>
+<p>Follow this link to login:</p>
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&redirect_to={{ .RedirectTo }}">Log In</a>
+</p>
+<div>{{ .Token }}</div>
