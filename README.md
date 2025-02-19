@@ -1,7 +1,9 @@
 # Supabase Nuxt
 
-![NPM Version](https://img.shields.io/npm/v/%40floatingpixels%2Fsupabase-nuxt?color=28CF8D)
-![NPM Downloads](https://img.shields.io/npm/dt/%40floatingpixels%2Fsupabase-nuxt)
+<p>
+  <a href="https://www.npmjs.com/package/@floatingpixels/supabase-nuxt"><img src="https://img.shields.io/npm/v/%40floatingpixels%2Fsupabase-nuxt.svg?style=flat&colorA=18181B&colorB=28CF8D" alt="Version"></a>
+  <a href="https://www.npmjs.com/package/@floatingpixels/supabase-nuxt"><img src="https://img.shields.io/npm/dt/%40floatingpixels%2Fsupabase-nuxt.svg?style=flat&colorA=18181B&colorB=28CF8Dt" alt="Downloads"></a>
+</p>
 
 ## Features
 
