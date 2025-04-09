@@ -122,7 +122,11 @@ export default defineNuxtModule<ModuleOptions>({
     extendViteConfig(config => {
       config.optimizeDeps = {
         ...config.optimizeDeps,
-        include: [...(config.optimizeDeps?.include || []), '@floatingpixels/supabase-nuxt > @supabase/postgrest-js'],
+        include: [
+          ...(config.optimizeDeps?.include || []),
+          '@floatingpixels/supabase-nuxt > @supabase/postgrest-js',
+          '@floatingpixels/supabase-nuxt > cookie',
+        ],
       }
     })
   },
