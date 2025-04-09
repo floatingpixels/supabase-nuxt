@@ -1,11 +1,4 @@
-import {
-  defineNuxtModule,
-  addPlugin,
-  addTypeTemplate,
-  createResolver,
-  addServerHandler,
-  extendViteConfig,
-} from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, addTypeTemplate, createResolver, addServerHandler } from '@nuxt/kit'
 import type { ModuleOptions } from './types'
 
 export * from './types'
@@ -118,21 +111,21 @@ export default defineNuxtModule<ModuleOptions>({
       options.references.push({ path: resolve(nuxt.options.buildDir, 'types/supabase.d.ts') })
     })
 
-    // Pre-bundle supabase packages to avoid CommonJS import issues with ESM
-    extendViteConfig(config => {
-      config.optimizeDeps = {
-        ...config.optimizeDeps,
-        include: [
-          ...(config.optimizeDeps?.include || []),
-          '@supabase/functions-js',
-          '@supabase/auth-js',
-          '@supabase/postgrest-js',
-          '@supabase/realtime-js',
-          '@supabase/storage-js',
-          '@supabase/supabase-js',
-          '@supabase/ssr',
-        ],
-      }
-    })
+    // // Pre-bundle supabase packages to avoid CommonJS import issues with ESM
+    // extendViteConfig(config => {
+    //   config.optimizeDeps = {
+    //     ...config.optimizeDeps,
+    //     include: [
+    //       ...(config.optimizeDeps?.include || []),
+    //       '@supabase/functions-js',
+    //       '@supabase/auth-js',
+    //       '@supabase/postgrest-js',
+    //       '@supabase/realtime-js',
+    //       '@supabase/storage-js',
+    //       '@supabase/supabase-js',
+    //       '@supabase/ssr',
+    //     ],
+    //   }
+    // })
   },
 })
