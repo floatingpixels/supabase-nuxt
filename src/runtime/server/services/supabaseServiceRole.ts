@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, parseCookieHeader } from '@supabase/ssr'
 import type { H3Event } from 'h3'
-import { setCookie, parseCookies } from 'h3'
+import { setCookie, getHeader } from 'h3'
 import { useRuntimeConfig } from '#imports'
 
 export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
@@ -23,10 +23,13 @@ export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseCl
     supabaseClient = createServerClient(url, serviceRoleKey, {
       cookies: {
         getAll: (): { name: string; value: string }[] => {
-          const cookie_records = parseCookies(event)
-          return Object.entries(cookie_records).map(([name, value]) => ({
-            name,
-            value,
+          const cookie_header = getHeader(event, 'Cookie')
+          if (!cookie_header) {
+            return []
+          }
+          return parseCookieHeader(cookie_header).map(item => ({
+            name: item.name,
+            value: item.value ?? '',
           }))
         },
         setAll(cookiesToSet) {
