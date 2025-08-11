@@ -3,7 +3,7 @@ const supabase = useSupabaseClient()
 // const {
 //   data: { user },
 // } = await supabase.auth.getUser()
-const user = await useSupabaseUser()
+const { data: user } = await useSupabaseUser()
 
 const { data: clientData } = await supabase.from('posts').select('title, content, comments ( content, member_id )')
 const { data: serverData } = await useFetch('/api/test')
@@ -18,7 +18,7 @@ const signOut = async () => {
   <div>
     <div>
       <h2>User</h2>
-      <div>User ID:{{ user?.id }}</div>
+      <div>User Name: {{ user?.user_metadata.user_name }}</div>
       <div>E-Mail: {{ user?.email }}</div>
       <pre data-testid="user-data">{{ user }}</pre>
       <button @click="signOut">Sign out</button>

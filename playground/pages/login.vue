@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const supabase = useSupabaseClient()
-const user = await useSupabaseUser()
+const { data: user } = await useSupabaseUser()
 
 const signInWithOAuth = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
