@@ -33,11 +33,11 @@ export default defineNuxtConfig({
 })
 ```
 
-Add `SUPABASE_URL` and `SUPABASE_ANON_KEY` to `.env`:
+Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to `.env`:
 
 ```zsh
 NUXT_PUBLIC_SUPABASE_URL="https://example.supabase.co"
-NUXT_PUBLIC_SUPABASE_ANON_KEY=""
+NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=""
 ```
 
 When dynamically setting the variables during in an environment, make sure to prefix the environment variables with `NUXT_PUBLIC_` in order to use `runtimeConfig`.
@@ -65,15 +65,15 @@ The unique Supabase URL which is supplied when you create a new project in your 
 
 ### `key`
 
-Default: `process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY`
+Default: `process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-Supabase 'anon key', used to bypass the Supabase API gateway and interact with your Supabase database making use of user JWT to apply RLS Policies.
+Supabase 'publishable key', used to access the Supabase API gateway and interact with your Supabase database making use of user JWT to apply RLS Policies.
 
 ### `serviceKey`
 
 Default: `process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY`
 
-Supabase 'service role key', has super admin rights and can bypass your Row Level Security.
+Supabase 'service role key', has super admin rights and can bypass your Row Level Security. This can be any secret key configured in your Supabase project.
 
 ### `redirect`
 

@@ -1,10 +1,16 @@
 import type { SupabaseClientOptions } from '@supabase/supabase-js'
 
 declare module '@nuxt/schema' {
+  interface RuntimeConfig {
+    supabase: {
+      serviceRoleKey?: string
+    }
+  }
+
   interface PublicRuntimeConfig {
     supabase: {
       url: string
-      anonKey: string
+      publishableKey: string
       redirect: boolean
       redirectOptions: RedirectOptions
       clientOptions: SupabaseClientOptions<string>
@@ -37,20 +43,20 @@ export interface ModuleOptions {
   url?: string
 
   /**
-   * Supabase Client API Key
+   * Supabase Publishable Client API Key
    * @example '123456789'
    * @type string
    * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
    */
-  anonKey?: string
+  publishableKey?: string
 
   /**
-   * Supabase Service key
+   * Supabase Secret Service Role key
    * @example '123456789'
    * @type string
    * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
    */
-  serviceRoleKey?: string
+  secretKey?: string
 
   /**
    * Redirect automatically to login page if user is not authenticated
@@ -84,3 +90,5 @@ export interface ModuleOptions {
    */
   clientOptions?: SupabaseClientOptions<string>
 }
+
+export {}

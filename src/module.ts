@@ -8,8 +8,6 @@ import {
 } from '@nuxt/kit'
 import type { ModuleOptions } from './types'
 
-export * from './types'
-
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'supabase-nuxt',
@@ -20,8 +18,8 @@ export default defineNuxtModule<ModuleOptions>({
   },
   defaults: {
     url: undefined,
-    anonKey: undefined,
-    serviceRoleKey: undefined,
+    publishableKey: undefined,
+    secretKey: undefined,
     redirect: false,
     redirectOptions: {
       login: '/login',
@@ -44,20 +42,27 @@ export default defineNuxtModule<ModuleOptions>({
     if (!process.env.NUXT_PUBLIC_SUPABASE_URL && !options.url) {
       console.warn('Missing `NUXT_PUBLIC_SUPABASE_URL` in environment or `url` in module options')
     }
-    if (!process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY && !options.anonKey) {
-      console.warn('Missing `NUXT_PUBLIC_SUPABASE_ANON_KEY` in environment or `anonKey` in module options')
+    if (!process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY && !options.publishableKey) {
+      console.warn(
+        'Missing `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in environment or `publishableKey` in module options',
+      )
     }
 
     nuxt.options.runtimeConfig.public.supabase = {
       url: options.url!,
-      anonKey: options.anonKey!,
+      publishableKey: options.publishableKey!,
       redirect: options.redirect!,
       redirectOptions: options.redirectOptions!,
       clientOptions: options.clientOptions!,
     }
 
     nuxt.options.runtimeConfig.supabase = {
-      serviceRoleKey: options.serviceRoleKey,
+      serviceRoleKey: options.secretKey,
+    }
+
+    nuxt.options.alias = {
+      ...nuxt.options.alias,
+      '#supabase/server': resolve('./runtime/server/services'),
     }
 
     // inject server route to handle email confirmation in PKCE flow

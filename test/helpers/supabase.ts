@@ -1,4 +1,4 @@
-import type { Database } from '~~/playground/types/supabase'
+import type { Database } from '../../playground/types/supabase'
 import { createClient } from '@supabase/supabase-js'
 
 const serviceRole = createClient<Database>(

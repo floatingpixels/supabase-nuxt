@@ -1,6 +1,6 @@
 // @vitest-environment nuxt
 import { beforeAll, describe, expect, it } from 'vitest'
-import { setup } from '@nuxt/test-utils/e2e'
+import { setup } from '@nuxt/test-utils'
 import { useSupabaseClient } from '#imports'
 import type { Database } from '../playground/types/supabase'
 

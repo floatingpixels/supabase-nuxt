@@ -6,13 +6,13 @@ import { useRuntimeConfig } from '#imports'
 
 export const supabaseServerClient = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
   const {
-    supabase: { url, anonKey },
+    supabase: { url, publishableKey },
   } = useRuntimeConfig().public
 
   let supabaseClient = event.context._supabaseClient as SupabaseClient<T>
 
   if (!supabaseClient) {
-    supabaseClient = createServerClient(url, anonKey, {
+    supabaseClient = createServerClient(url, publishableKey, {
       cookies: {
         getAll: (): { name: string; value: string }[] => {
           const cookie_records = parseCookies(event)

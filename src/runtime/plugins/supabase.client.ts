@@ -5,10 +5,9 @@ export default defineNuxtPlugin({
   name: 'supabase',
   enforce: 'pre',
   async setup() {
-    const config = useRuntimeConfig().public.supabase
-    const { url, anonKey } = config
+    const { url, publishableKey } = useRuntimeConfig().public.supabase
 
-    const supabaseBrowserClient = createBrowserClient(url, anonKey)
+    const supabaseBrowserClient = createBrowserClient(url, publishableKey)
 
     return {
       provide: {

@@ -6,13 +6,13 @@ export default defineNuxtPlugin({
   name: 'supabase',
   enforce: 'pre',
   async setup() {
-    const { url, anonKey } = useRuntimeConfig().public.supabase
+    const { url, publishableKey } = useRuntimeConfig().public.supabase
     const event = useRequestEvent()
     if (!event) {
       throw new Error('No request event found')
     }
 
-    const supabaseServerClient = createServerClient(url, anonKey, {
+    const supabaseServerClient = createServerClient(url, publishableKey, {
       cookies: {
         getAll: (): { name: string; value: string }[] => {
           const cookie_records = parseCookies(event)

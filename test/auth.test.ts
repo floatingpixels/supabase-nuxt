@@ -10,49 +10,60 @@ describe('auth', { concurrent: false, sequential: true }, () => {
     await setup()
   })
 
-  it('has a working runtime', () => {
-    const config = useRuntimeConfig().public.supabase
-    const { url, anonKey } = config
-    expect(config).toBeDefined()
-    expect(url).toBeDefined()
-    expect(anonKey).toBeDefined()
-  })
-
-  it('has a working client', () => {
-    expect(supabase).toBeDefined()
-  })
-
-  it('can log with password', async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: 'user1@example.com',
-      password: 'password',
+  describe('supabase', () => {
+    it('has a working runtime', () => {
+      const config = useRuntimeConfig().public.supabase
+      const { url, publishableKey } = config
+      expect(config).toBeDefined()
+      expect(url).toBeDefined()
+      expect(publishableKey).toBeDefined()
     })
-    expect(error).toBeNull()
-    expect(data).toBeDefined()
-    expect(data?.user).toBeDefined()
-    expect(data?.session).toBeDefined()
-    expect(data?.user?.email).toBe('user1@example.com')
+
+    it('has a working client', () => {
+      expect(supabase).toBeDefined()
+    })
+
+    it('can log with password', async () => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: 'user1@example.com',
+        password: 'password',
+      })
+      expect(error).toBeNull()
+      expect(data).toBeDefined()
+      expect(data?.user).toBeDefined()
+      expect(data?.session).toBeDefined()
+      expect(data?.user?.email).toBe('user1@example.com')
+    })
   })
 
-  it('can get user', async () => {
-    await supabase.auth.signOut()
-    let user = await useSupabaseUser()
-    expect(user).toBeNull()
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: 'user1@example.com',
-      password: 'password',
+  describe('useSupabaseUser', () => {
+    it('does not return data when signed out', async () => {
+      await supabase.auth.signOut()
+      let { data, error } = await useSupabaseUser()
+      expect(data).toBeUndefined()
+      expect(error).toBeNull()
     })
-    expect(error).toBeNull()
-    expect(data).not.toBeNull()
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    expect(session).not.toBeNull()
+    it('can get user', async () => {
+      await supabase.auth.signOut()
 
-    user = await useSupabaseUser()
-    expect(user).not.toBeNull()
-    expect(user?.email).toBe('user1@example.com')
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: 'user1@example.com',
+        password: 'password',
+      })
+      expect(error).toBeNull()
+      expect(data).not.toBeNull()
+      expect(data).not.toBeUndefined()
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      expect(session).not.toBeNull()
+
+      const { data: user, error: compError } = await useSupabaseUser()
+      expect(compError).toBeNull()
+      expect(user).not.toBeNull()
+      expect(user?.email).toBe('user1@example.com')
+    })
   })
 })
