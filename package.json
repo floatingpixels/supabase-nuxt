@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.54.0",
+    "@supabase/supabase-js": "^2.55.0",
     "cookie": "^1.0.2"
   },
   "devDependencies": {
@@ -85,7 +85,7 @@
     "postgres": "^3.4.7",
     "prettier": "^3.6.2",
     "release-it": "^19.0.4",
-    "supabase": "^2.33.9",
+    "supabase": "^2.34.3",
     "typescript": "5.9.2",
     "vitest": "^3.2.4",
     "vue-tsc": "^3.0.5"
