@@ -63,13 +63,13 @@ Default: `process.env.NUXT_PUBLIC_SUPABASE_URL` (e.g.: `https://example.supabase
 
 The unique Supabase URL which is supplied when you create a new project in your project dashboard.
 
-### `key`
+### `publishableKey`
 
 Default: `process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
 Supabase 'publishable key', used to access the Supabase API gateway and interact with your Supabase database making use of user JWT to apply RLS Policies.
 
-### `serviceKey`
+### `secretKey`
 
 Default: `process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY`
 
