@@ -39,7 +39,7 @@ describe('auth', { concurrent: false, sequential: true }, () => {
   describe('useSupabaseUser', () => {
     it('does not return data when signed out', async () => {
       await supabase.auth.signOut()
-      let { data, error } = await useSupabaseUser()
+      const { data, error } = await useSupabaseUser()
       expect(data).toBeUndefined()
       expect(error).toBeNull()
     })
