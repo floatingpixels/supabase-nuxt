@@ -4,13 +4,13 @@ import { setup } from '@nuxt/test-utils/e2e'
 import { useSupabaseClient, useSupabaseUser, useRuntimeConfig } from '#imports'
 
 describe('auth', { concurrent: false, sequential: true }, () => {
-  const supabase = useSupabaseClient()
-
   beforeAll(async () => {
     await setup()
   })
 
   describe('supabase', () => {
+    const supabase = useSupabaseClient()
+
     it('has a working runtime', () => {
       const config = useRuntimeConfig().public.supabase
       const { url, publishableKey } = config
@@ -37,6 +37,8 @@ describe('auth', { concurrent: false, sequential: true }, () => {
   })
 
   describe('useSupabaseUser', () => {
+    const supabase = useSupabaseClient()
+
     it('does not return data when signed out', async () => {
       await supabase.auth.signOut()
       const { data, error } = await useSupabaseUser()

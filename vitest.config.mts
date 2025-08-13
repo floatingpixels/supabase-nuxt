@@ -1,18 +1,33 @@
-import { defineVitestConfig } from '@nuxt/test-utils/config'
+import { defineConfig } from 'vitest/config'
+import { defineVitestProject } from '@nuxt/test-utils/config'
 import { fileURLToPath } from 'node:url'
-
-export default defineVitestConfig({
+const r = (path: string) => fileURLToPath(new URL(path, import.meta.url))
+export default defineConfig({
   test: {
-    include: ['./test/**/*.spec.ts', './test/**/*.test.ts'],
-    exclude: ['**/playwright/**'],
-    environment: 'nuxt',
-    environmentOptions: {
-      nuxt: {
-        rootDir: fileURLToPath(new URL('./playground', import.meta.url)),
-        dotenv: {
-          fileName: 'dev.env',
+    projects: [
+      {
+        test: {
+          name: 'unit',
+          include: ['test/{e2e,unit}/*.{test,spec}.ts'],
+          exclude: ['**/playwright/**'],
+          environment: 'node',
         },
       },
-    },
+      await defineVitestProject({
+        test: {
+          name: 'nuxt',
+          include: ['test/nuxt/*.{test,spec}.ts'],
+          environment: 'nuxt',
+          environmentOptions: {
+            nuxt: {
+              rootDir: r('./playground'),
+              dotenv: {
+                fileName: 'dev.env',
+              },
+            },
+          },
+        },
+      }),
+    ],
   },
 })
