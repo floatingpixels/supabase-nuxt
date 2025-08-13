@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Database } from '~/types/supabase'
+import type { Database } from '~~/types/supabase'
 const { data } = await useSupabaseClient<Database>().from('members').select()
 </script>
 <template>
