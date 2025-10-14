@@ -158,7 +158,7 @@ When using e-mail authentication, a confirmation e-mail is sent to new users, an
 <p>Hello {{ .Data.first_name }}</p>
 <p>Follow this link to confirm your user:</p>
 <p>
-  <a href="{{ .SiteURL }}/supabase/auth/confirm?token_hash={{ .TokenHash }}&type=email&redirect_to={{ .RedirectTo }}>Confirm your email</a
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&redirect_to={{ .RedirectTo }}>Confirm your email</a
   >
 </p>
 ```
