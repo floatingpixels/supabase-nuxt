@@ -69,7 +69,9 @@ const password = ref()
     />
     <pre id="authResponse">{{ authResponse }}</pre>
     <template v-if="user">
-      <h2>Logged in as {{ `${user.user_metadata.first_name} ${user.user_metadata.last_name}` }} - {{ user.email }}</h2>
+      <h2>
+        Logged in as {{ `${user?.user_metadata?.first_name} ${user?.user_metadata?.last_name}` }} - {{ user.email }}
+      </h2>
       <NuxtLink to="/">Go to home page</NuxtLink>
       <button @click="signOut">Sign Out</button>
     </template>

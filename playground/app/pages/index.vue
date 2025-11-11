@@ -18,7 +18,7 @@ const signOut = async () => {
   <div>
     <div>
       <h2>User</h2>
-      <div>User Name: {{ user?.user_metadata.user_name }}</div>
+      <div>User Name: {{ user?.user_metadata?.user_name }}</div>
       <div>E-Mail: {{ user?.email }}</div>
       <pre data-testid="user-data">{{ user }}</pre>
       <button @click="signOut">Sign out</button>
