@@ -16,11 +16,16 @@
       in {
         devShell = pkgs.mkShell {
           buildInputs = with pkgs; [
-            nodejs_22 # Node.js
+            nodejs_24 # Node.js
             pnpm
             nodePackages."@antfu/ni"
             postgresql_15
           ];
+          shellHook = ''
+            if [ -d "./node_modules/supabase/bin" ]; then
+              PATH_add $PWD/node_modules/supabase/bin
+            fi
+          '';
         };
       });
 }
