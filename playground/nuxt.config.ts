@@ -15,4 +15,5 @@ export default defineNuxtConfig({
   experimental: {
     appManifest: false,
   },
+  ignore: ['.direnv'],
 })
