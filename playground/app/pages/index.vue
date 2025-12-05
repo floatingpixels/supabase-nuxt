@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const supabase = useSupabaseClient()
+import type { Database } from '../../types/supabase'
+const supabase = useSupabaseClient<Database>()
 // const {
 //   data: { user },
 // } = await supabase.auth.getUser()
