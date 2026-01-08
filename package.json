@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
-    "@supabase/supabase-js": "^2.88.0",
+    "@supabase/supabase-js": "^2.90.0",
     "cookie": "^1.1.1"
   },
   "devDependencies": {
@@ -68,27 +68,27 @@
     "@nuxt/kit": "^4.2.2",
     "@nuxt/module-builder": "^1.0.2",
     "@nuxt/schema": "^4.2.2",
-    "@nuxt/test-utils": "3.21.0",
+    "@nuxt/test-utils": "3.23.0",
     "@playwright/test": "^1.57.0",
     "@snaplet/copycat": "^6.0.0",
     "@snaplet/seed": "^0.98.0",
     "@types/eslint-config-prettier": "^6.11.3",
-    "@types/node": "^24.10.4",
+    "@types/node": "^25.0.3",
     "@vitest/coverage-v8": "4.0.16",
     "@vue/test-utils": "^2.4.6",
     "changelogen": "^0.6.2",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
-    "happy-dom": "^20.0.11",
+    "happy-dom": "^20.1.0",
     "nuxt": "^4.2.2",
     "playwright-core": "^1.57.0",
-    "postgres": "^3.4.7",
+    "postgres": "^3.4.8",
     "prettier": "^3.7.4",
-    "release-it": "^19.1.0",
-    "supabase": "^2.67.2",
+    "release-it": "^19.2.3",
+    "supabase": "^2.72.0",
     "typescript": "5.9.3",
     "vitest": "^4.0.16",
-    "vue-tsc": "^3.1.8"
+    "vue-tsc": "^3.2.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
