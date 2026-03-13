@@ -1,4 +1,6 @@
 import { defineNuxtPlugin, useRuntimeConfig, useRequestEvent } from 'nuxt/app'
+import type { SupabaseClientOptions } from '@supabase/supabase-js'
+import type { CookieSerializeOptions } from 'cookie-es'
 import { createServerClient } from '@supabase/ssr'
 import { setCookie, parseCookies } from 'h3'
 
@@ -6,13 +8,14 @@ export default defineNuxtPlugin({
   name: 'supabase',
   enforce: 'pre',
   async setup() {
-    const { url, publishableKey } = useRuntimeConfig().public.supabase
+    const { url, publishableKey, clientOptions } = useRuntimeConfig().public.supabase
     const event = useRequestEvent()
     if (!event) {
       throw new Error('No request event found')
     }
 
-    const supabaseServerClient = createServerClient(url, publishableKey, {
+    const serverClientOptions = {
+      ...(clientOptions as Record<string, unknown>),
       cookies: {
         getAll: (): { name: string; value: string }[] => {
           const cookie_records = parseCookies(event)
@@ -21,7 +24,7 @@ export default defineNuxtPlugin({
             value,
           }))
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
               setCookie(event, name, value, options)
@@ -31,7 +34,18 @@ export default defineNuxtPlugin({
           }
         },
       },
-    })
+    }
+
+    const supabaseServerClient = createServerClient(
+      url,
+      publishableKey,
+      serverClientOptions as SupabaseClientOptions<'public'> & {
+        cookies: {
+          getAll: () => { name: string, value: string }[]
+          setAll: (cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>) => void
+        }
+      },
+    )
 
     return {
       provide: {

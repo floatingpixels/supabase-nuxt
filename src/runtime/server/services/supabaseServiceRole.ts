@@ -1,14 +1,26 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js'
+import type { CookieSerializeOptions } from 'cookie-es'
 import { createServerClient } from '@supabase/ssr'
 import type { H3Event } from 'h3'
 import { setCookie, parseCookies } from 'h3'
 import { useRuntimeConfig } from '#imports'
 
+type ServerCookieOptions = {
+  getAll: () => { name: string, value: string }[]
+  setAll: (cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>) => void
+}
+
+type ServerClientFactory<T> = (
+  supabaseUrl: string,
+  supabaseKey: string,
+  options: SupabaseClientOptions<string> & { cookies: ServerCookieOptions },
+) => SupabaseClient<T>
+
 export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
   const {
     supabase: { serviceRoleKey },
     public: {
-      supabase: { url },
+      supabase: { url, clientOptions },
     },
   } = useRuntimeConfig()
 
@@ -18,9 +30,11 @@ export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseCl
   }
 
   let supabaseClient = event.context._supabaseServiceRole as SupabaseClient<T>
+  const createTypedServerClient = createServerClient as unknown as ServerClientFactory<T>
 
   if (!supabaseClient) {
-    supabaseClient = createServerClient(url, serviceRoleKey, {
+    const serverClientOptions = {
+      ...(clientOptions as Record<string, unknown>),
       cookies: {
         getAll: (): { name: string; value: string }[] => {
           const cookie_records = parseCookies(event)
@@ -29,7 +43,7 @@ export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseCl
             value,
           }))
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
               setCookie(event, name, value, options)
@@ -39,7 +53,13 @@ export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseCl
           }
         },
       },
-    })
+    }
+
+    supabaseClient = createTypedServerClient(
+      url,
+      serviceRoleKey,
+      serverClientOptions as SupabaseClientOptions<string> & { cookies: ServerCookieOptions },
+    )
     event.context._supabaseServiceRole = supabaseClient
   }
 

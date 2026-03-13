@@ -1,6 +1,11 @@
+import type { HookResult, NitroConfig } from '@nuxt/schema'
 import type { SupabaseClientOptions } from '@supabase/supabase-js'
 
 declare module '@nuxt/schema' {
+  interface NuxtHooks {
+    'nitro:config': (nitroConfig: NitroConfig) => HookResult
+  }
+
   interface RuntimeConfig {
     supabase: {
       serviceRoleKey?: string

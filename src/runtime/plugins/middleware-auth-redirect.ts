@@ -19,7 +19,7 @@ export default defineNuxtPlugin({
 
         const { data: user, error } = await useSupabaseUser()
         if (error || !user) {
-          return navigateTo('/login', { redirectCode: 302 })
+          return navigateTo(login || '/login', { redirectCode: 302 })
         }
       }),
       { global: true },

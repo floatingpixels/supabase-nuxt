@@ -1,13 +1,18 @@
 import { defineNuxtPlugin, useRuntimeConfig } from 'nuxt/app'
+import type { SupabaseClientOptions } from '@supabase/supabase-js'
 import { createBrowserClient } from '@supabase/ssr'
 
 export default defineNuxtPlugin({
   name: 'supabase',
   enforce: 'pre',
   async setup() {
-    const { url, publishableKey } = useRuntimeConfig().public.supabase
+    const { url, publishableKey, clientOptions } = useRuntimeConfig().public.supabase
 
-    const supabaseBrowserClient = createBrowserClient(url, publishableKey)
+    const supabaseBrowserClient = createBrowserClient(
+      url,
+      publishableKey,
+      clientOptions as SupabaseClientOptions<'public'>,
+    )
 
     return {
       provide: {
