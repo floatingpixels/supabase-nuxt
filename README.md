@@ -11,6 +11,10 @@
 
 Checkout the [Nuxt 3](https://v3.nuxtjs.org) documentation and [Supabase](https://supabase.com) to learn more.
 
+## Testing
+
+Test setup and command behavior are documented in [docs/testing.md](./docs/testing.md).
+
 ## Installation
 
 Add `@floatingpixels/supabase-nuxt` dev dependency to your project:
