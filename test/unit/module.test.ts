@@ -1,0 +1,210 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const addPlugin = vi.fn()
+const addTypeTemplate = vi.fn()
+const addServerHandler = vi.fn()
+const extendViteConfig = vi.fn()
+
+type HookCallback = (arg: unknown) => void
+
+type TestModule = {
+  setup: (options: Record<string, unknown>, nuxt: TestNuxt) => Promise<void> | void
+}
+
+type TestNuxt = {
+  options: {
+    runtimeConfig: {
+      public: Record<string, unknown>
+      supabase: Record<string, unknown>
+    }
+    alias: Record<string, string>
+    buildDir: string
+  }
+  hook: (name: string, callback: HookCallback) => void
+}
+
+vi.mock('@nuxt/kit', () => ({
+  defineNuxtModule: <T>(definition: T) => definition,
+  addPlugin,
+  addTypeTemplate,
+  addServerHandler,
+  extendViteConfig,
+  createResolver: () => ({
+    resolve: (...paths: string[]) => `/resolved${paths.map(path => path.replace(/^\./, '')).join('/')}`,
+  }),
+}))
+
+describe('module contract', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.clearAllMocks()
+  })
+
+  it('registers runtime config, plugins, handlers, aliases, types, and vite deps', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const module = (await import('../../src/module')).default as unknown as TestModule
+    const hooks: Record<string, HookCallback> = {}
+    const nuxt: TestNuxt = {
+      options: {
+        runtimeConfig: {
+          public: {},
+          supabase: {},
+        },
+        alias: {
+          '#existing': '/existing',
+        },
+        buildDir: '/build',
+      },
+      hook: vi.fn((name: string, callback: HookCallback) => {
+        hooks[name] = callback
+      }),
+    }
+
+    await module.setup({
+      url: 'https://project.supabase.co',
+      publishableKey: 'publishable-key',
+      secretKey: 'service-role-key',
+      redirect: true,
+      redirectOptions: {
+        login: '/sign-in',
+        exclude: ['/public/*'],
+      },
+      clientOptions: {
+        auth: {
+          persistSession: false,
+        },
+      },
+    }, nuxt)
+
+    expect(warnSpy).not.toHaveBeenCalled()
+    expect(nuxt.options.runtimeConfig.public.supabase).toEqual({
+      url: 'https://project.supabase.co',
+      publishableKey: 'publishable-key',
+      redirect: true,
+      redirectOptions: {
+        login: '/sign-in',
+        exclude: ['/public/*'],
+      },
+      clientOptions: {
+        auth: {
+          persistSession: false,
+        },
+      },
+    })
+    expect(nuxt.options.runtimeConfig.supabase).toEqual({
+      serviceRoleKey: 'service-role-key',
+    })
+    expect(nuxt.options.alias).toEqual({
+      '#existing': '/existing',
+      '#supabase/server': '/resolved/runtime/server/services',
+    })
+
+    expect(addPlugin).toHaveBeenCalledTimes(3)
+    expect(addPlugin).toHaveBeenNthCalledWith(1, '/resolved/runtime/plugins/supabase.server')
+    expect(addPlugin).toHaveBeenNthCalledWith(2, '/resolved/runtime/plugins/supabase.client')
+    expect(addPlugin).toHaveBeenNthCalledWith(3, '/resolved/runtime/plugins/middleware-auth-redirect')
+
+    expect(addServerHandler).toHaveBeenCalledTimes(2)
+    expect(addServerHandler).toHaveBeenNthCalledWith(1, {
+      route: '/auth/confirm',
+      handler: '/resolved/runtime/server/auth/confirm',
+      method: 'get',
+    })
+    expect(addServerHandler).toHaveBeenNthCalledWith(2, {
+      route: '/auth/callback',
+      handler: '/resolved/runtime/server/auth/callback',
+      method: 'get',
+    })
+
+    expect(hooks['imports:dirs']).toBeTypeOf('function')
+    expect(hooks['nitro:config']).toBeTypeOf('function')
+    expect(hooks['prepare:types']).toBeTypeOf('function')
+
+    const importDirs = ['/existing/imports']
+    hooks['imports:dirs']!(importDirs)
+    expect(importDirs).toEqual(['/existing/imports', '/resolved/runtime/composables'])
+
+    const nitroConfig = {
+      alias: {
+        '#nitro-existing': '/nitro-existing',
+      },
+      externals: {
+        inline: ['/already-inline'],
+      },
+    }
+    hooks['nitro:config']!(nitroConfig)
+    expect(nitroConfig).toEqual({
+      alias: {
+        '#nitro-existing': '/nitro-existing',
+        '#supabase/server': '/resolved/runtime/server/services',
+      },
+      externals: {
+        inline: ['/already-inline', '/resolved/runtime'],
+      },
+    })
+
+    expect(addTypeTemplate).toHaveBeenCalledTimes(1)
+    const typeTemplate = addTypeTemplate.mock.calls[0]![0]
+    expect(typeTemplate.filename).toBe('types/supabase.d.ts')
+    expect(typeTemplate.getContents()).toContain("declare module '#supabase/server'")
+    expect(typeTemplate.getContents()).toContain('/resolved/runtime/server/services')
+
+    const typeOptions = { references: [] as Array<{ path: string }> }
+    hooks['prepare:types']!(typeOptions)
+    expect(typeOptions.references).toEqual([{ path: '/resolved/build/types/supabase.d.ts' }])
+
+    expect(extendViteConfig).toHaveBeenCalledTimes(1)
+    const viteConfig = {
+      optimizeDeps: {
+        include: ['existing-dep'],
+      },
+    }
+    extendViteConfig.mock.calls[0]![0](viteConfig)
+    expect(viteConfig.optimizeDeps.include).toEqual([
+      'existing-dep',
+      '@floatingpixels/supabase-nuxt > @supabase/postgrest-js',
+      '@floatingpixels/supabase-nuxt > @supabase/supabase-js',
+      '@floatingpixels/supabase-nuxt > cookie',
+    ])
+  })
+
+  it('warns when public credentials are missing and skips redirect plugin when disabled', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const module = (await import('../../src/module')).default as unknown as TestModule
+    const hooks: Record<string, HookCallback> = {}
+    const nuxt: TestNuxt = {
+      options: {
+        runtimeConfig: {
+          public: {},
+          supabase: {},
+        },
+        alias: {},
+        buildDir: '/build',
+      },
+      hook: vi.fn((name: string, callback: HookCallback) => {
+        hooks[name] = callback
+      }),
+    }
+
+    delete process.env.NUXT_PUBLIC_SUPABASE_URL
+    delete process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+    await module.setup({
+      redirect: false,
+      redirectOptions: {
+        login: '/login',
+        exclude: [],
+      },
+      clientOptions: {
+        auth: {
+          persistSession: true,
+        },
+      },
+    }, nuxt)
+
+    expect(warnSpy).toHaveBeenCalledTimes(2)
+    expect(addPlugin).toHaveBeenCalledTimes(2)
+    expect(addPlugin).not.toHaveBeenCalledWith('/resolved/runtime/plugins/middleware-auth-redirect')
+    expect(hooks['nitro:config']).toBeTypeOf('function')
+  })
+})

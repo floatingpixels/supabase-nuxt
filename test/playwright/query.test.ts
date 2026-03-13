@@ -8,7 +8,7 @@ test.use({
 })
 
 test('data fetching from browser', async ({ page, goto }) => {
-  await goto('/login', { waitUntil: 'hydration' })
+  await goto('/sign-in', { waitUntil: 'hydration' })
 
   // await page.screenshot({ path: 'login.png' })
   await page.locator('input[type="email"]').fill('user1@example.com')
@@ -22,7 +22,7 @@ test('data fetching from browser', async ({ page, goto }) => {
 })
 
 test('data fetching from server', async ({ page, goto }) => {
-  await goto('/login', { waitUntil: 'hydration' })
+  await goto('/sign-in', { waitUntil: 'hydration' })
 
   // await page.screenshot({ path: 'login.png' })
   await page.locator('input[type="email"]').fill('user1@example.com')
@@ -40,7 +40,7 @@ test('data fetching from server', async ({ page, goto }) => {
 })
 
 test('rls policies are applied on select', async ({ page, goto }) => {
-  await goto('/login', { waitUntil: 'hydration' })
+  await goto('/sign-in', { waitUntil: 'hydration' })
 
   // await page.screenshot({ path: 'login.png' })
   await page.locator('input[type="email"]').fill('user1@example.com')

@@ -1,71 +1,88 @@
 // @vitest-environment nuxt
-import { beforeAll, describe, expect, it } from 'vitest'
-import { setup } from '@nuxt/test-utils/e2e'
+import { describe, expect, it } from 'vitest'
+import { mountSuspended } from '@nuxt/test-utils/runtime'
+import { defineComponent, h } from 'vue'
 import { useSupabaseClient, useSupabaseUser, useRuntimeConfig } from '#imports'
 
-describe('auth', { concurrent: false, sequential: true }, () => {
-  beforeAll(async () => {
-    await setup()
+async function runInNuxtContext<T>(factory: () => Promise<T> | T) {
+  let result!: T
+
+  await mountSuspended(defineComponent({
+    async setup() {
+      result = await factory()
+      return () => h('div')
+    },
+  }))
+
+  return result
+}
+
+describe('auth', () => {
+  it('has a working runtime', async () => {
+    const config = await runInNuxtContext(() => useRuntimeConfig().public.supabase)
+    const { url, publishableKey } = config
+
+    expect(config).toBeDefined()
+    expect(url).toBeDefined()
+    expect(publishableKey).toBeDefined()
   })
 
-  describe('supabase', () => {
-    const supabase = useSupabaseClient()
+  it('has a working client', async () => {
+    const supabase = await runInNuxtContext(() => useSupabaseClient())
 
-    it('has a working runtime', () => {
-      const config = useRuntimeConfig().public.supabase
-      const { url, publishableKey } = config
-      expect(config).toBeDefined()
-      expect(url).toBeDefined()
-      expect(publishableKey).toBeDefined()
-    })
-
-    it('has a working client', () => {
-      expect(supabase).toBeDefined()
-    })
-
-    it('can log with password', async () => {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: 'user1@example.com',
-        password: 'password',
-      })
-      expect(error).toBeNull()
-      expect(data).toBeDefined()
-      expect(data?.user).toBeDefined()
-      expect(data?.session).toBeDefined()
-      expect(data?.user?.email).toBe('user1@example.com')
-    })
+    expect(supabase).toBeDefined()
   })
 
-  describe('useSupabaseUser', () => {
-    const supabase = useSupabaseClient()
-
-    it('does not return data when signed out', async () => {
-      await supabase.auth.signOut()
-      const { data, error } = await useSupabaseUser()
-      expect(data).toBeUndefined()
-      expect(error).toBeNull()
+  it('can log with password', async () => {
+    const supabase = await runInNuxtContext(() => useSupabaseClient())
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: 'user1@example.com',
+      password: 'password',
     })
 
-    it('can get user', async () => {
-      await supabase.auth.signOut()
+    expect(error).toBeNull()
+    expect(data).toBeDefined()
+    expect(data?.user).toBeDefined()
+    expect(data?.session).toBeDefined()
+    expect(data?.user?.email).toBe('user1@example.com')
+  })
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: 'user1@example.com',
-        password: 'password',
-      })
-      expect(error).toBeNull()
-      expect(data).not.toBeNull()
-      expect(data).not.toBeUndefined()
+  it('does not return data when signed out', async () => {
+    const supabase = await runInNuxtContext(() => useSupabaseClient())
+    await supabase.auth.signOut()
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      expect(session).not.toBeNull()
+    const { data, error } = await runInNuxtContext(() => useSupabaseUser())
 
-      const { data: user, error: compError } = await useSupabaseUser()
-      expect(compError).toBeNull()
-      expect(user).not.toBeNull()
-      expect(user?.email).toBe('user1@example.com')
+    expect(data).toBeNull()
+    expect(error).toBeNull()
+  })
+
+  it('can get user', async () => {
+    const supabase = await runInNuxtContext(() => useSupabaseClient())
+    await supabase.auth.signOut()
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: 'user1@example.com',
+      password: 'password',
     })
+
+    expect(error).toBeNull()
+    expect(data).not.toBeNull()
+    expect(data).not.toBeUndefined()
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    expect(session).not.toBeNull()
+
+    const { data: user, error: compError } = await runInNuxtContext(() => useSupabaseUser())
+
+    expect(compError).toBeNull()
+    expect(user).not.toBeNull()
+    expect(user?.id).toBeTruthy()
+    expect(user?.email).toBe('user1@example.com')
+    expect(user?.claims.sub).toBe(user?.id)
+    expect(user?.user_metadata).toBeDefined()
+    expect(user?.app_metadata).toBeDefined()
   })
 })

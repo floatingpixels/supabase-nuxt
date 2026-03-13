@@ -8,7 +8,7 @@ test.use({
 })
 
 test('logging in with user and password', async ({ page, goto }) => {
-  await goto('/login', { waitUntil: 'hydration' })
+  await goto('/sign-in', { waitUntil: 'hydration' })
 
   // await page.screenshot({ path: 'login.png' })
   await page.locator('input[type="email"]').fill('user1@example.com')
@@ -21,11 +21,11 @@ test('logging in with user and password', async ({ page, goto }) => {
 
 test('redirect to login page when not logged in', async ({ page, goto }) => {
   await goto('/', { waitUntil: 'networkidle' })
-  await expect(page, { message: 'module option supabase.redirect = true not working' }).toHaveURL('/login')
+  await expect(page, { message: 'module option supabase.redirect = true not working' }).toHaveURL('/sign-in')
 })
 
 test('do not redirect when logged in', async ({ page, goto }) => {
-  await goto('/login', { waitUntil: 'hydration' })
+  await goto('/sign-in', { waitUntil: 'hydration' })
 
   await page.locator('input[type="email"]').fill('user1@example.com')
   await page.locator('input[type="password"]').fill('password')
@@ -37,7 +37,7 @@ test('do not redirect when logged in', async ({ page, goto }) => {
 })
 
 test('useSupabaseUser gets user data', async ({ page, goto }) => {
-  await goto('/login', { waitUntil: 'hydration' })
+  await goto('/sign-in', { waitUntil: 'hydration' })
 
   await page.locator('input[type="email"]').fill('user1@example.com')
   await page.locator('input[type="password"]').fill('password')
@@ -52,4 +52,31 @@ test('useSupabaseUser gets user data', async ({ page, goto }) => {
   expect(userData).toContain('"email": "user1@example.com"')
   expect(userData).toContain('"first_name": "Daphnee"')
   expect(userData).toContain('"last_name": "Gleason"')
+})
+
+test('session survives a server request and browser reload', async ({ page, goto }) => {
+  await goto('/sign-in', { waitUntil: 'hydration' })
+
+  await page.locator('input[type="email"]').fill('user1@example.com')
+  await page.locator('input[type="password"]').fill('password')
+  await page.getByRole('button', { name: 'Sign In with E-Mail and' }).click()
+  await page.waitForSelector('pre')
+
+  const firstSession = await page.evaluate(async () => {
+    return await fetch('/api/session').then(response => response.json())
+  })
+
+  expect(firstSession).toMatchObject({
+    user: {
+      email: 'user1@example.com',
+    },
+  })
+
+  await page.reload()
+
+  const secondSession = await page.evaluate(async () => {
+    return await fetch('/api/session').then(response => response.json())
+  })
+
+  expect(secondSession).toEqual(firstSession)
 })

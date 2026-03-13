@@ -23,7 +23,7 @@ export default defineConfig({
         ...bunStubConfig,
         test: {
           name: 'unit',
-          include: ['test/{e2e,unit}/*.{test,spec}.ts'],
+          include: ['test/{e2e,unit}/**/*.{test,spec}.ts'],
           exclude: ['**/playwright/**'],
           environment: 'node',
         },

@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   supabase: {
     redirect: true,
     redirectOptions: {
+      login: '/sign-in',
       exclude: ['/service'],
     },
   },
