@@ -5,7 +5,9 @@ import {
   createResolver,
   addServerHandler,
   extendViteConfig,
+  addImportsDir,
 } from '@nuxt/kit'
+import { defu } from 'defu'
 import type { ModuleOptions } from './types'
 
 export default defineNuxtModule<ModuleOptions>({
@@ -37,28 +39,44 @@ export default defineNuxtModule<ModuleOptions>({
 
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
+    const publicSupabaseConfig = nuxt.options.runtimeConfig.public.supabase as Partial<ModuleOptions> | undefined
+    const supabaseConfig = nuxt.options.runtimeConfig.supabase as { serviceRoleKey?: string } | undefined
 
     // Make sure url and key are set either in environment or module options
-    if (!process.env.NUXT_PUBLIC_SUPABASE_URL && !options.url) {
+    if (!process.env.NUXT_PUBLIC_SUPABASE_URL && !options.url && !publicSupabaseConfig?.url) {
       console.warn('Missing `NUXT_PUBLIC_SUPABASE_URL` in environment or `url` in module options')
     }
-    if (!process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY && !options.publishableKey) {
+    if (
+      !process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+      && !options.publishableKey
+      && !publicSupabaseConfig?.publishableKey
+    ) {
       console.warn(
         'Missing `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in environment or `publishableKey` in module options',
       )
     }
 
-    nuxt.options.runtimeConfig.public.supabase = {
-      url: options.url!,
-      publishableKey: options.publishableKey!,
-      redirect: options.redirect!,
-      redirectOptions: options.redirectOptions!,
-      clientOptions: options.clientOptions!,
-    }
+    nuxt.options.runtimeConfig.public.supabase = defu(publicSupabaseConfig, {
+      url: options.url ?? '',
+      publishableKey: options.publishableKey ?? '',
+      redirect: options.redirect ?? false,
+      redirectOptions: options.redirectOptions ?? {
+        login: '/login',
+        exclude: [],
+      },
+      clientOptions: options.clientOptions ?? {
+        auth: {
+          flowType: 'pkce',
+          detectSessionInUrl: true,
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+      },
+    })
 
-    nuxt.options.runtimeConfig.supabase = {
-      serviceRoleKey: options.secretKey,
-    }
+    nuxt.options.runtimeConfig.supabase = defu(supabaseConfig, {
+      serviceRoleKey: options.secretKey ?? '',
+    })
 
     nuxt.options.alias = {
       ...nuxt.options.alias,
@@ -83,10 +101,7 @@ export default defineNuxtModule<ModuleOptions>({
     addPlugin(resolve('./runtime/plugins/supabase.server'))
     addPlugin(resolve('./runtime/plugins/supabase.client'))
 
-    // Add supabase composables
-    nuxt.hook('imports:dirs', dirs => {
-      dirs.push(resolve('./runtime/composables'))
-    })
+    addImportsDir(resolve('./runtime/composables'))
 
     // Add route middleware plugin for redirect
     if (options.redirect) {

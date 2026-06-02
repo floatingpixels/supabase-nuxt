@@ -23,7 +23,7 @@ type ServerClientFactory<T> = (
 export const supabaseServerClient = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
   const {
     supabase: { url, publishableKey, clientOptions },
-  } = useRuntimeConfig().public
+  } = useRuntimeConfig(event).public
 
   let supabaseClient = event.context._supabaseClient as SupabaseClient<T>
   const createTypedServerClient = createServerClient as unknown as ServerClientFactory<T>

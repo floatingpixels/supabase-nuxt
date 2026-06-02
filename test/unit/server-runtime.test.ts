@@ -78,6 +78,7 @@ describe('server runtime', () => {
 
     expect(first).toBe(client)
     expect(second).toBe(client)
+    expect(useRuntimeConfig).toHaveBeenCalledWith(event)
     expect(createServerClient).toHaveBeenCalledTimes(1)
 
     const options = createServerClient.mock.calls[0]![2]
@@ -107,6 +108,7 @@ describe('server runtime', () => {
 
     const { supabaseServiceRole } = await import('../../src/runtime/server/services/supabaseServiceRole')
     await expect(supabaseServiceRole(event)).rejects.toThrow('Missing `SUPABASE_SERVICE_ROLE_KEY` in `.env`')
+    expect(useRuntimeConfig).toHaveBeenCalledWith(event)
 
     const serviceClient = { kind: 'service-role-client' }
     useRuntimeConfig.mockReturnValue({

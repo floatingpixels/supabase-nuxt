@@ -59,7 +59,8 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
-    "cookie": "^1.1.1"
+    "cookie": "^1.1.1",
+    "defu": "^6.1.7"
   },
   "devDependencies": {
     "@nuxt/devtools": "4.0.0-alpha.6",

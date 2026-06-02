@@ -17,6 +17,9 @@ importers:
       cookie:
         specifier: ^1.1.1
         version: 1.1.1
+      defu:
+        specifier: ^6.1.7
+        version: 6.1.7
     devDependencies:
       '@nuxt/devtools':
         specifier: 4.0.0-alpha.6

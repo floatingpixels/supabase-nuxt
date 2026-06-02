@@ -26,7 +26,7 @@ export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseCl
     public: {
       supabase: { url, clientOptions },
     },
-  } = useRuntimeConfig()
+  } = useRuntimeConfig(event)
 
   // Make sure service key is set
   if (!serviceRoleKey) {

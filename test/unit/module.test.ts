@@ -4,6 +4,7 @@ const addPlugin = vi.fn()
 const addTypeTemplate = vi.fn()
 const addServerHandler = vi.fn()
 const extendViteConfig = vi.fn()
+const addImportsDir = vi.fn()
 
 type HookCallback = (arg: unknown) => void
 
@@ -29,6 +30,7 @@ vi.mock('@nuxt/kit', () => ({
   addTypeTemplate,
   addServerHandler,
   extendViteConfig,
+  addImportsDir,
   createResolver: () => ({
     resolve: (...paths: string[]) => `/resolved${paths.map(path => path.replace(/^\./, '')).join('/')}`,
   }),
@@ -116,13 +118,9 @@ describe('module contract', () => {
       method: 'get',
     })
 
-    expect(hooks['imports:dirs']).toBeTypeOf('function')
     expect(hooks['nitro:config']).toBeTypeOf('function')
     expect(hooks['prepare:types']).toBeTypeOf('function')
-
-    const importDirs = ['/existing/imports']
-    hooks['imports:dirs']!(importDirs)
-    expect(importDirs).toEqual(['/existing/imports', '/resolved/runtime/composables'])
+    expect(addImportsDir).toHaveBeenCalledWith('/resolved/runtime/composables')
 
     const nitroConfig = {
       alias: {
@@ -206,5 +204,71 @@ describe('module contract', () => {
     expect(addPlugin).toHaveBeenCalledTimes(2)
     expect(addPlugin).not.toHaveBeenCalledWith('/resolved/runtime/plugins/middleware-auth-redirect')
     expect(hooks['nitro:config']).toBeTypeOf('function')
+  })
+
+  it('extends existing runtime config instead of replacing it', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const module = (await import('../../src/module')).default as unknown as TestModule
+    const nuxt: TestNuxt = {
+      options: {
+        runtimeConfig: {
+          public: {
+            supabase: {
+              url: 'https://runtime.supabase.co',
+              redirectOptions: {
+                exclude: ['/health'],
+              },
+              clientOptions: {
+                auth: {
+                  autoRefreshToken: false,
+                },
+              },
+            },
+          },
+          supabase: {
+            serviceRoleKey: 'runtime-service-role-key',
+          },
+        },
+        alias: {},
+        buildDir: '/build',
+      },
+      hook: vi.fn(),
+    }
+
+    await module.setup({
+      url: 'https://option.supabase.co',
+      publishableKey: 'publishable-key',
+      secretKey: 'option-service-role-key',
+      redirect: true,
+      redirectOptions: {
+        login: '/sign-in',
+        exclude: ['/public/*'],
+      },
+      clientOptions: {
+        auth: {
+          persistSession: false,
+        },
+      },
+    }, nuxt)
+
+    expect(warnSpy).not.toHaveBeenCalled()
+    expect(nuxt.options.runtimeConfig.public.supabase).toEqual({
+      url: 'https://runtime.supabase.co',
+      publishableKey: 'publishable-key',
+      redirect: true,
+      redirectOptions: {
+        login: '/sign-in',
+        exclude: ['/health', '/public/*'],
+      },
+      clientOptions: {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      },
+    })
+    expect(nuxt.options.runtimeConfig.supabase).toEqual({
+      serviceRoleKey: 'runtime-service-role-key',
+    })
   })
 })
