@@ -5,6 +5,7 @@ const useRuntimeConfig = vi.fn()
 const createServerClient = vi.fn()
 const parseCookies = vi.fn()
 const setCookie = vi.fn()
+const setResponseHeaders = vi.fn()
 const getQuery = vi.fn()
 const sendRedirect = vi.fn()
 const createError = vi.fn((input: { statusMessage: string }) => {
@@ -34,6 +35,7 @@ vi.mock('h3', () => ({
   defineEventHandler: <T>(handler: T) => handler,
   parseCookies,
   setCookie,
+  setResponseHeaders,
   getQuery,
   sendRedirect,
   createError,
@@ -81,8 +83,12 @@ describe('server runtime', () => {
     const options = createServerClient.mock.calls[0]![2]
     expect(options.auth).toEqual({ persistSession: false })
     expect(options.cookies.getAll()).toEqual([{ name: 'sb', value: 'cookie-value' }])
-    options.cookies.setAll([{ name: 'sb-next', value: 'next', options: { secure: true } }])
+    options.cookies.setAll(
+      [{ name: 'sb-next', value: 'next', options: { secure: true } }],
+      { 'Cache-Control': 'private, no-store' },
+    )
     expect(setCookie).toHaveBeenCalledWith(event, 'sb-next', 'next', { secure: true })
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'private, no-store' })
   })
 
   it('memoizes the service role client and throws when the key is missing', async () => {
@@ -134,6 +140,12 @@ describe('server runtime', () => {
         Authorization: 'Bearer test',
       },
     })
+    createServerClient.mock.calls[0]![2].cookies.setAll(
+      [{ name: 'sb-service', value: 'service', options: { httpOnly: true } }],
+      { Pragma: 'no-cache' },
+    )
+    expect(setCookie).toHaveBeenCalledWith(event, 'sb-service', 'service', { httpOnly: true })
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, { Pragma: 'no-cache' })
   })
 
   it('handles callback auth errors and success redirects', async () => {

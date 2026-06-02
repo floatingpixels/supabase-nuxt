@@ -1,8 +1,9 @@
 import { defineNuxtPlugin, useRuntimeConfig, useRequestEvent } from 'nuxt/app'
 import type { SupabaseClientOptions } from '@supabase/supabase-js'
-import type { CookieSerializeOptions } from 'cookie-es'
 import { createServerClient } from '@supabase/ssr'
-import { setCookie, parseCookies } from 'h3'
+import { setCookie, parseCookies, setResponseHeaders } from 'h3'
+
+type CookieSerializeOptions = Parameters<typeof setCookie>[3]
 
 export default defineNuxtPlugin({
   name: 'supabase',
@@ -24,11 +25,15 @@ export default defineNuxtPlugin({
             value,
           }))
         },
-        setAll(cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>) {
+        setAll(
+          cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>,
+          headers: Record<string, string> = {},
+        ) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
               setCookie(event, name, value, options)
             })
+            setResponseHeaders(event, headers)
           } catch {
             console.error('Error setting cookies', cookiesToSet)
           }
@@ -42,7 +47,10 @@ export default defineNuxtPlugin({
       serverClientOptions as SupabaseClientOptions<'public'> & {
         cookies: {
           getAll: () => { name: string, value: string }[]
-          setAll: (cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>) => void
+          setAll: (
+            cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>,
+            headers?: Record<string, string>,
+          ) => void
         }
       },
     )

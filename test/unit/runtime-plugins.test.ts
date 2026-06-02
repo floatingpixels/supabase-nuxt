@@ -10,6 +10,7 @@ const createBrowserClient = vi.fn()
 const createServerClient = vi.fn()
 const parseCookies = vi.fn()
 const setCookie = vi.fn()
+const setResponseHeaders = vi.fn()
 const useSupabaseUser = vi.fn()
 
 type PluginWithSetup<T> = {
@@ -42,6 +43,7 @@ vi.mock('@supabase/ssr', () => ({
 vi.mock('h3', () => ({
   parseCookies,
   setCookie,
+  setResponseHeaders,
 }))
 
 vi.mock('../../src/runtime/composables/useSupabaseUser', () => ({
@@ -143,8 +145,12 @@ describe('runtime plugins', () => {
       },
     })
     expect(options.cookies.getAll()).toEqual([{ name: 'sb', value: 'cookie-value' }])
-    options.cookies.setAll([{ name: 'next-cookie', value: 'next-value', options: { httpOnly: true } }])
+    options.cookies.setAll(
+      [{ name: 'next-cookie', value: 'next-value', options: { httpOnly: true } }],
+      { 'Cache-Control': 'private, no-store' },
+    )
     expect(setCookie).toHaveBeenCalledWith(event, 'next-cookie', 'next-value', { httpOnly: true })
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'private, no-store' })
     expect(result).toEqual({
       provide: {
         supabase: {
