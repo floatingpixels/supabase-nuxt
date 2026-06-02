@@ -90,15 +90,5 @@
     "typescript": "6.0.3",
     "vitest": "^4.1.7",
     "vue-tsc": "^3.3.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "@prisma/engines",
-      "@snaplet/seed",
-      "esbuild",
-      "supabase",
-      "unrs-resolver"
-    ]
   }
 }

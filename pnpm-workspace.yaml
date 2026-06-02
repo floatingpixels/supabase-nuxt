@@ -3,4 +3,5 @@ allowBuilds:
   '@prisma/engines': true
   '@snaplet/seed': true
   esbuild: true
+  supabase: true
   unrs-resolver: true
