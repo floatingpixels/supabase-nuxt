@@ -7,9 +7,9 @@
 
 ## Features
 
-[@floatingpixels/supabase-nuxt](https://github.com/nuxt-modules/supabase) is a Nuxt module for first class integration with Supabase. It makes it easy to use Supabase authentication, database and realtime features in your Nuxt 3 application. Especially when using server-side rendering SSR, using Supabase can be tricky, this module takes care of the intricacies and lets you simply use the power of Supabase!
+[@floatingpixels/supabase-nuxt](https://github.com/floatingpixels/supabase-nuxt) is a Nuxt module for first-class integration with Supabase. It makes it easy to use Supabase authentication, database and realtime features in your Nuxt 3 or Nuxt 4 application. Especially when using server-side rendering (SSR), using Supabase can be tricky, this module takes care of the intricacies and lets you simply use the power of Supabase!
 
-Checkout the [Nuxt 3](https://v3.nuxtjs.org) documentation and [Supabase](https://supabase.com) to learn more.
+Check out the [Nuxt](https://nuxt.com/docs) documentation and [Supabase](https://supabase.com/docs) to learn more.
 
 ## Testing
 
@@ -37,14 +37,14 @@ export default defineNuxtConfig({
 })
 ```
 
-Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` to `.env`:
+Add `NUXT_PUBLIC_SUPABASE_URL` and `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to `.env`:
 
 ```zsh
 NUXT_PUBLIC_SUPABASE_URL="https://example.supabase.co"
 NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=""
 ```
 
-When dynamically setting the variables during in an environment, make sure to prefix the environment variables with `NUXT_PUBLIC_` in order to use `runtimeConfig`.
+When dynamically setting the variables in an environment, make sure to prefix the public environment variables with `NUXT_PUBLIC_` in order to use `runtimeConfig`.
 
 The public keys are required to be set in the environment for the module to work. If the service role is needed, you should also set `NUXT_SUPABASE_SERVICE_ROLE_KEY` in the environment, which will be only available on the server side as a private runtime variable.
 
@@ -60,6 +60,8 @@ export default defineNuxtConfig({
   }
 }
 ```
+
+The module extends existing `runtimeConfig.public.supabase` and `runtimeConfig.supabase` values instead of replacing them. This lets explicit runtime config and `NUXT_*` environment overrides take precedence over module defaults.
 
 ### `url`
 
@@ -83,7 +85,7 @@ Supabase 'service role key', has super admin rights and can bypass your Row Leve
 
 Default: `false`
 
-Re-direct automatically to the configured login page if a non authenticated user is navigating to a page. When set to `true` a global middleware is used to check for a logged-in Supabase use on all non-excluded routes.
+Re-direct automatically to the configured login page if a non authenticated user is navigating to a page. When set to `true` a global middleware is used to check for a logged-in Supabase user on all non-excluded routes.
 
 ### `redirectOptions`
 
@@ -169,9 +171,9 @@ When using e-mail authentication, a confirmation e-mail is sent to new users, an
 
 The confirmation route on your server is provided by this module, so you don't need to implement it yourself. It's available at `/auth/confirm`. It will automatically confirm the user and re-direct to the `redirect_to` route.
 
-If you want to customize the confirmation route, you can do so by creating a server route to handle the request, and point to it in your Supabase e-mail template. Your custom route will receive the `token_hash` and `type` URL parameters, and the `redirect_to` URL parameter if provided. You can use the `useSupabaseClient` composable to confirm the user and re-direct to the `next` route:
+If you want to customize the confirmation route, you can do so by creating a server route to handle the request, and point to it in your Supabase e-mail template. Your custom route will receive the `token_hash` and `type` URL parameters, and the `redirect_to` URL parameter if provided. You can use the `supabaseServerClient` server helper to confirm the user and re-direct to the next route:
 
-> ⚠️ You can use the provided confirm route at `/supabase/confirm`, the implementation of a custom route is optional!
+> ⚠️ You can use the provided confirm route at `/auth/confirm`, the implementation of a custom route is optional!
 
 ```ts [server/api/confirm.ts]
 import { EmailOtpType } from '@supabase/supabase-js'
@@ -278,7 +280,7 @@ This composable can be used to make requests to the Supabase API. It's auto-impo
 
 Please check [Supabase](https://supabase.com/docs/reference/javascript/select) documentation on how to fully use the Supabase client.
 
-Here is an example of fetching from the database using the Supabase client's `select` method with Nuxt 3 [useAsyncData](https://nuxt.com/docs/getting-started/data-fetching#useasyncdata).
+Here is an example of fetching from the database using the Supabase client's `select` method with Nuxt's [useAsyncData](https://nuxt.com/docs/getting-started/data-fetching#useasyncdata).
 
 ```vue
 <script setup lang="ts">
@@ -356,7 +358,7 @@ const signInWithOAuth = async () => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'github',
     options: {
-      redirectTo: 'http://localhost:3000/confirm',
+      redirectTo: 'http://localhost:3000/auth/callback',
     },
   })
   if (error) console.log(error)
@@ -395,7 +397,7 @@ Make requests with super admin rights to the Supabase API with the `supabaseServ
 
 It provides similar functionality as the `supabaseServerClient` but it provides a client with super admin rights that can bypass your [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security).
 
-The client is initialized with the `SUPABASE_SERVICE_ROLE_KEY` you must have in your environment. Checkout the doc if you want to know more about [Supabase keys](https://supabase.com/docs/learn/auth-deep-dive/auth-deep-dive-jwts#jwts-in-supabase).
+The client is initialized with the `NUXT_SUPABASE_SERVICE_ROLE_KEY` you must have in your environment. Check out the doc if you want to know more about [Supabase keys](https://supabase.com/docs/learn/auth-deep-dive/auth-deep-dive-jwts#jwts-in-supabase).
 
 > ⚠️ The service key gives admin access to your database, be careful to not expose it in your client side code or in your git repository.
 
@@ -405,7 +407,7 @@ In your server route use the `supabaseServiceRole` from `#supabase/server`.
 import { supabaseServiceRole } from '#supabase/server'
 
 export default eventHandler(async event => {
-  const client = supabaseServiceRole(event)
+  const client = await supabaseServiceRole(event)
 
   const { data } = await client.from('rls-protected-table').select()
 
