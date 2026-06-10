@@ -221,6 +221,9 @@ describe('module contract', () => {
               clientOptions: {
                 auth: {
                   autoRefreshToken: false,
+                  experimental: {
+                    passkey: true,
+                  },
                 },
               },
             },
@@ -263,6 +266,9 @@ describe('module contract', () => {
       clientOptions: {
         auth: {
           autoRefreshToken: false,
+          experimental: {
+            passkey: true,
+          },
           persistSession: false,
         },
       },

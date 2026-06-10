@@ -118,6 +118,25 @@ Default:
 
 A documentation of Supabase client options is [available here](https://supabase.com/docs/reference/javascript/initializing#parameters).
 
+Supabase experimental client features can also be enabled here. For example, passkey authentication requires `@supabase/supabase-js` v2.105.0 or later, must be enabled in your Supabase project, and must be explicitly opted into when creating the client:
+
+```ts [nuxt.config.ts]
+export default defineNuxtConfig({
+  modules: ['@floatingpixels/supabase-nuxt'],
+  supabase: {
+    clientOptions: {
+      auth: {
+        experimental: {
+          passkey: true,
+        },
+      },
+    },
+  },
+})
+```
+
+See the [Supabase passkey authentication docs](https://supabase.com/docs/guides/auth/passkeys) for the required Dashboard, CLI, or Management API configuration.
+
 ## Authentication
 
 The module makes it easy to use [Supabase Auth](https://supabase.com/docs/guides/auth) in your application. In most use-cases for Supabase you'll want users to be authenticated, so you can leverage row-level security (RLS) in the database. Supabase Auth is designed to work perfectly with [RLS](https://supabase.com/docs/guides/auth/row-level-security).
