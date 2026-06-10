@@ -1,30 +1,19 @@
 import type { SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js'
-import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import type { H3Event } from 'h3'
-import { setCookie, parseCookies, setResponseHeaders } from 'h3'
 import { useRuntimeConfig } from '#imports'
 
-type CookieSerializeOptions = Parameters<typeof setCookie>[3]
-
-type ServerCookieOptions = {
-  getAll: () => { name: string, value: string }[]
-  setAll: (
-    cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>,
-    headers?: Record<string, string>,
-  ) => void
-}
-
-type ServerClientFactory<T> = (
+type ClientFactory<T> = (
   supabaseUrl: string,
   supabaseKey: string,
-  options: SupabaseClientOptions<string> & { cookies: ServerCookieOptions },
+  options: SupabaseClientOptions<string>,
 ) => SupabaseClient<T>
 
 export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
   const {
     supabase: { serviceRoleKey },
     public: {
-      supabase: { url, clientOptions },
+      supabase: { url },
     },
   } = useRuntimeConfig(event)
 
@@ -34,39 +23,19 @@ export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseCl
   }
 
   let supabaseClient = event.context._supabaseServiceRole as SupabaseClient<T>
-  const createTypedServerClient = createServerClient as unknown as ServerClientFactory<T>
+  const createTypedClient = createClient as unknown as ClientFactory<T>
 
   if (!supabaseClient) {
-    const serverClientOptions = {
-      ...(clientOptions as Record<string, unknown>),
-      cookies: {
-        getAll: (): { name: string; value: string }[] => {
-          const cookie_records = parseCookies(event)
-          return Object.entries(cookie_records).map(([name, value]) => ({
-            name,
-            value,
-          }))
-        },
-        setAll(
-          cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>,
-          headers: Record<string, string> = {},
-        ) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              setCookie(event, name, value, options)
-            })
-            setResponseHeaders(event, headers)
-          } catch {
-            console.error('Error setting cookies', cookiesToSet)
-          }
-        },
-      },
-    }
-
-    supabaseClient = createTypedServerClient(
+    supabaseClient = createTypedClient(
       url,
       serviceRoleKey,
-      serverClientOptions as SupabaseClientOptions<string> & { cookies: ServerCookieOptions },
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      },
     )
     event.context._supabaseServiceRole = supabaseClient
   }

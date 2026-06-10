@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const useRuntimeConfig = vi.fn()
+const createClient = vi.fn()
 const createServerClient = vi.fn()
 const parseCookies = vi.fn()
 const setCookie = vi.fn()
@@ -29,6 +30,10 @@ vi.mock('#imports', () => ({
 
 vi.mock('@supabase/ssr', () => ({
   createServerClient,
+}))
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient,
 }))
 
 vi.mock('h3', () => ({
@@ -92,7 +97,7 @@ describe('server runtime', () => {
     expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'private, no-store' })
   })
 
-  it('memoizes the service role client and throws when the key is missing', async () => {
+  it('creates a cookie-free service role client and throws when the key is missing', async () => {
     const event = { context: {} } as unknown as EventWithContext
     useRuntimeConfig.mockReturnValueOnce({
       supabase: {
@@ -128,26 +133,83 @@ describe('server runtime', () => {
         },
       },
     })
-    createServerClient.mockReturnValue(serviceClient)
+    parseCookies.mockReturnValue({
+      sb: 'signed-in-user-session',
+    })
+    createClient.mockReturnValue(serviceClient)
 
     const first = await supabaseServiceRole(event)
     const second = await supabaseServiceRole(event)
 
     expect(first).toBe(serviceClient)
     expect(second).toBe(serviceClient)
-    expect(createServerClient).toHaveBeenCalledTimes(1)
-    expect(createServerClient.mock.calls[0]![1]).toBe('service-role-key')
-    expect(createServerClient.mock.calls[0]![2].global).toEqual({
-      headers: {
-        Authorization: 'Bearer test',
+    expect(createClient).toHaveBeenCalledTimes(1)
+    expect(createClient).toHaveBeenCalledWith(
+      'https://project.supabase.co',
+      'service-role-key',
+      {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
+      },
+    )
+    expect(createServerClient).not.toHaveBeenCalled()
+    expect(parseCookies).not.toHaveBeenCalled()
+    expect(setCookie).not.toHaveBeenCalled()
+    expect(setResponseHeaders).not.toHaveBeenCalled()
+  })
+
+  it('keeps service role PostgREST and auth admin calls independent from user cookies', async () => {
+    const select = vi.fn().mockResolvedValue({ data: [{ id: 1 }], error: null })
+    const from = vi.fn().mockReturnValue({ select })
+    const listUsers = vi.fn().mockResolvedValue({ data: { users: [] }, error: null })
+    const serviceClient = {
+      from,
+      auth: {
+        admin: {
+          listUsers,
+        },
+      },
+    }
+    const event = {
+      context: {},
+    } as unknown as EventWithContext
+    useRuntimeConfig.mockReturnValue({
+      supabase: {
+        serviceRoleKey: 'service-role-key',
+      },
+      public: {
+        supabase: {
+          url: 'https://project.supabase.co',
+          clientOptions: {
+            global: {
+              headers: {
+                Authorization: 'Bearer signed-in-user-token',
+              },
+            },
+          },
+        },
       },
     })
-    createServerClient.mock.calls[0]![2].cookies.setAll(
-      [{ name: 'sb-service', value: 'service', options: { httpOnly: true } }],
-      { Pragma: 'no-cache' },
-    )
-    expect(setCookie).toHaveBeenCalledWith(event, 'sb-service', 'service', { httpOnly: true })
-    expect(setResponseHeaders).toHaveBeenCalledWith(event, { Pragma: 'no-cache' })
+    parseCookies.mockReturnValue({
+      sb: 'signed-in-user-session',
+    })
+    createClient.mockReturnValue(serviceClient)
+
+    const { supabaseServiceRole } = await import('../../src/runtime/server/services/supabaseServiceRole')
+    const client = await supabaseServiceRole(event)
+
+    await client.from('service_only_check').select('id')
+    await client.auth.admin.listUsers()
+
+    expect(from).toHaveBeenCalledWith('service_only_check')
+    expect(select).toHaveBeenCalledWith('id')
+    expect(listUsers).toHaveBeenCalledTimes(1)
+    expect(createClient.mock.calls[0]![2]).not.toHaveProperty('global.headers.Authorization')
+    expect(parseCookies).not.toHaveBeenCalled()
+    expect(setCookie).not.toHaveBeenCalled()
   })
 
   it('handles callback auth errors and success redirects', async () => {
