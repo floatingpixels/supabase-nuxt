@@ -71,4 +71,12 @@ describe('user queries', () => {
     expect(data).toBeDefined()
     expect(data).toHaveLength(1)
   })
+
+  it('cannot select service-only data as an authenticated user', async () => {
+    const { data, error } = await supabase.from('service_only_check').select()
+
+    expect(data).toBeNull()
+    expect(error).not.toBeNull()
+    expect(error?.message).toContain('permission denied')
+  })
 })

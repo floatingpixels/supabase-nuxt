@@ -46,3 +46,13 @@ ON public.comments
 FOR SELECT
 TO authenticated
 USING (true);
+
+CREATE TABLE IF NOT EXISTS public.service_only_check (
+  id int PRIMARY KEY,
+  check_name text NOT NULL
+);
+
+ALTER TABLE public.service_only_check ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON TABLE public.service_only_check FROM anon, authenticated;
+GRANT SELECT ON TABLE public.service_only_check TO service_role;

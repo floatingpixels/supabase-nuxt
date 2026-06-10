@@ -126,6 +126,21 @@ export type Database = {
           },
         ]
       }
+      service_only_check: {
+        Row: {
+          check_name: string
+          id: number
+        }
+        Insert: {
+          check_name: string
+          id: number
+        }
+        Update: {
+          check_name?: string
+          id?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

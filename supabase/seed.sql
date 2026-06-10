@@ -61,6 +61,12 @@ INSERT INTO public.members VALUES ('4e0bbd03-0833-5e7c-888c-6716c41d1094', '2025
 INSERT INTO public.members VALUES ('ae82d94b-5e79-5452-af2d-ce4281d0c2f6', '2025-01-10 18:22:53.618117+00', 'user10', 'd875cc4d-3f05-4056-999e-8b8cfdfb3337');
 INSERT INTO public.members VALUES ('d9d21f76-3d42-52ad-b15d-fa4b409d4178', '2025-01-10 18:22:53.618117+00', 'user11', '6894697f-38d4-4d76-853d-5d84bacbcf3e');
 
+--
+-- Data for Name: service_only_check; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.service_only_check VALUES (1, 'service-role-only');
+
 
 --
 -- Data for Name: posts; Type: TABLE DATA; Schema: public; Owner: postgres
@@ -122,4 +128,3 @@ INSERT INTO public.comments VALUES ('85306a78-b749-5bc9-b283-0d0a81b2738d', 'aa6
 --
 
 SELECT pg_catalog.setval('auth.refresh_tokens_id_seq', 36, true);
-
