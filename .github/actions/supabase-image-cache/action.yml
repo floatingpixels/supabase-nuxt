@@ -1,0 +1,36 @@
+name: Supabase image cache
+description: >
+  Restores the Supabase stack's Docker images from the GitHub Actions cache so
+  test runs pull nothing from public registries (whose anonymous per-IP rate
+  limits are shared across GitHub-hosted runners). The cache key derives from
+  the pinned supabase CLI version and the stack configuration, so it
+  invalidates exactly when the image set changes. On a cache miss the calling
+  job pulls as usual and the save step uploads the images for future runs.
+  Adapted from besmyle-portal.
+
+runs:
+  using: composite
+  steps:
+    - name: Compute image cache key
+      id: key
+      shell: bash
+      run: |
+        version=$(node -p "require('supabase/package.json').version")
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Restore Supabase images
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: /tmp/supabase-images.tar.zst
+        key: supabase-images-${{ runner.os }}-${{ steps.key.outputs.version }}-${{ hashFiles('supabase/config.toml') }}
+
+    - name: Load cached images
+      if: steps.cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: zstd -dc /tmp/supabase-images.tar.zst | docker load
+
+outputs:
+  cache-hit:
+    description: Whether the image archive was restored
+    value: ${{ steps.cache.outputs.cache-hit }}

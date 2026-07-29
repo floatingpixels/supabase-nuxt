@@ -1,0 +1,23 @@
+name: Supabase image save
+description: >
+  Archives the pulled Supabase stack images for the cache post-step to upload.
+  Runs even when tests fail (the images were pulled either way), but only when
+  the restore step missed. The companion restore action is
+  supabase-image-cache. Adapted from besmyle-portal.
+
+runs:
+  using: composite
+  steps:
+    - name: Archive Supabase images
+      shell: bash
+      run: |
+        images=$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^public\.ecr\.aws/supabase/' || true)
+        if [ -z "$images" ]; then
+          echo "No Supabase images present; skipping archive."
+          exit 0
+        fi
+        echo "Archiving:"
+        echo "$images"
+        # shellcheck disable=SC2086
+        docker save $images | zstd -T0 -3 -o /tmp/supabase-images.tar.zst
+        ls -lh /tmp/supabase-images.tar.zst

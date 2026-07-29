@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      # Hermetic: typecheck plus the mocked unit suite; needs no Supabase.
+      - name: Run unit tests with coverage
+        run: pnpm test:unit --coverage
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Chromium only per run: this module's session handling is server-side;
+      # the full three-engine matrix stays available locally via pnpm test:e2e.
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Restore Supabase images
+        id: supabase-images
+        uses: ./.github/actions/supabase-image-cache
+
+      - name: Start Supabase and seed the database
+        run: pnpm run --silent db:start && pnpm run --silent db:reset
+
+      - name: Run Nuxt runtime tests
+        run: pnpm test:nuxt
+
+      - name: Run browser tests
+        run: pnpm test:pw --project='Desktop Chrome'
+
+      - name: Save Supabase images for caching
+        if: always() && steps.supabase-images.outputs.cache-hit != 'true'
+        uses: ./.github/actions/supabase-image-save
+
+      # Traces and reports can contain session cookies of local fixture
+      # users; retention is kept short.
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
