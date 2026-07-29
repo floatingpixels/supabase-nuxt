@@ -207,17 +207,16 @@ export default defineEventHandler(async event => {
   const redirectTo = getRelativeRedirectPath(query.redirect_to)
 
   if (!token_hash || !type) {
-    throw createError({ statusMessage: 'Invalid token' })
+    throw createError({ statusCode: 400, message: 'Invalid token' })
   }
 
   const supabase = await supabaseServerClient(event)
   const { error } = await supabase.auth.verifyOtp({ type, token_hash })
 
   if (error) {
-    throw createError({ statusMessage: error.message })
+    throw createError({ statusCode: error.status ?? 400, message: error.message })
   }
 
-  setAuthNoStoreHeaders(event)
   await sendRedirect(event, redirectTo, 302)
 })
 ```
@@ -253,17 +252,16 @@ export default defineEventHandler(async event => {
   const redirectTo = getRelativeRedirectPath(query.redirect_to)
 
   if (!code) {
-    throw createError({ statusMessage: 'No code provided' })
+    throw createError({ statusCode: 400, message: 'No code provided' })
   }
 
   const supabase = await supabaseServerClient(event)
   const { error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error) {
-    throw createError({ statusMessage: error.message })
+    throw createError({ statusCode: error.status ?? 400, message: error.message })
   }
 
-  setAuthNoStoreHeaders(event)
   await sendRedirect(event, redirectTo, 302)
 })
 ```

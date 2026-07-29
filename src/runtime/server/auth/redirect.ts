@@ -19,8 +19,10 @@ const hasUnsafeRedirectPrefix = (value: string) => {
   return normalized.startsWith('//') || normalized.startsWith('/\\') || normalized.startsWith('/%2f') || normalized.startsWith('/%5c')
 }
 
+export const firstQueryValue = (value: unknown) => (Array.isArray(value) ? value[0] : value)
+
 export const getRelativeRedirectPath = (value: unknown) => {
-  const redirectTo = Array.isArray(value) ? value[0] : value
+  const redirectTo = firstQueryValue(value)
 
   if (redirectTo === undefined || redirectTo === null || redirectTo === '') {
     return '/'
@@ -42,8 +44,15 @@ export const getRelativeRedirectPath = (value: unknown) => {
   return redirectTo
 }
 
+// The same cache-prevention headers @supabase/ssr passes to `setAll` whenever
+// it writes session cookies (documented on its SetAllCookies type). Using
+// identical values means the order of header writes on a request never
+// matters, and error responses get the same protection as cookie-carrying
+// ones.
 export const setAuthNoStoreHeaders = (event: H3Event) => {
   setResponseHeaders(event, {
-    'Cache-Control': 'no-store',
+    'Cache-Control': 'private, no-cache, no-store, must-revalidate, max-age=0',
+    'Expires': '0',
+    'Pragma': 'no-cache',
   })
 }

@@ -9,12 +9,22 @@ const setCookie = vi.fn()
 const setResponseHeaders = vi.fn()
 const getQuery = vi.fn()
 const sendRedirect = vi.fn()
-const createError = vi.fn((input: { statusMessage: string }) => {
-  const error = new Error(input.statusMessage)
+const createError = vi.fn((input: { statusCode?: number, statusMessage?: string, message?: string }) => {
+  const error = new Error(input.message ?? input.statusMessage)
   Object.assign(error, input)
   return error
 })
+
+// Mirrors the cache-prevention headers @supabase/ssr documents for setAll.
+const AUTH_NO_STORE_HEADERS = {
+  'Cache-Control': 'private, no-cache, no-store, must-revalidate, max-age=0',
+  'Expires': '0',
+  'Pragma': 'no-cache',
+}
 const supabaseServerClient = vi.fn()
+const getResponseHeader = vi.fn()
+const setResponseHeader = vi.fn()
+const removeResponseHeader = vi.fn()
 
 type EventWithContext = H3Event & {
   context: Record<string, unknown>
@@ -41,6 +51,9 @@ vi.mock('h3', () => ({
   parseCookies,
   setCookie,
   setResponseHeaders,
+  getResponseHeader,
+  setResponseHeader,
+  removeResponseHeader,
   getQuery,
   sendRedirect,
   createError,
@@ -225,15 +238,24 @@ describe('server runtime', () => {
 
     getQuery.mockReturnValue({})
     await expect(callbackHandler(event)).rejects.toThrow('No code provided')
+    expect(createError).toHaveBeenCalledWith({ statusCode: 400, message: 'No code provided' })
 
     getQuery.mockReturnValue({
       code: 'oauth-code',
       redirect_to: '/dashboard',
     })
     exchangeCodeForSession.mockResolvedValueOnce({
+      error: { message: 'exchange failed', status: 403 },
+    })
+    await expect(callbackHandler(event)).rejects.toThrow('exchange failed')
+    expect(createError).toHaveBeenCalledWith({ statusCode: 403, message: 'exchange failed' })
+
+    // Auth errors without an HTTP status still map to a client error.
+    exchangeCodeForSession.mockResolvedValueOnce({
       error: { message: 'exchange failed' },
     })
     await expect(callbackHandler(event)).rejects.toThrow('exchange failed')
+    expect(createError).toHaveBeenCalledWith({ statusCode: 400, message: 'exchange failed' })
 
     exchangeCodeForSession.mockResolvedValueOnce({
       error: null,
@@ -242,7 +264,7 @@ describe('server runtime', () => {
 
     expect(exchangeCodeForSession).toHaveBeenCalledWith('oauth-code')
     expect(sendRedirect).toHaveBeenCalledWith(event, '/dashboard', 302)
-    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'no-store' })
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, AUTH_NO_STORE_HEADERS)
   })
 
   it('rejects unsafe callback redirect targets before exchanging the code', async () => {
@@ -267,7 +289,7 @@ describe('server runtime', () => {
 
     expect(supabaseServerClient).not.toHaveBeenCalled()
     expect(exchangeCodeForSession).not.toHaveBeenCalled()
-    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'no-store' })
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, AUTH_NO_STORE_HEADERS)
   })
 
   it('handles confirm auth validation, verification errors, and success redirects', async () => {
@@ -285,6 +307,7 @@ describe('server runtime', () => {
       token_hash: 'token-only',
     })
     await expect(confirmHandler(event)).rejects.toThrow('Invalid token')
+    expect(createError).toHaveBeenCalledWith({ statusCode: 400, message: 'Invalid token' })
 
     getQuery.mockReturnValue({
       token_hash: 'token-hash',
@@ -292,9 +315,10 @@ describe('server runtime', () => {
       redirect_to: '/welcome',
     })
     verifyOtp.mockResolvedValueOnce({
-      error: { message: 'verify failed' },
+      error: { message: 'verify failed', status: 401 },
     })
     await expect(confirmHandler(event)).rejects.toThrow('verify failed')
+    expect(createError).toHaveBeenCalledWith({ statusCode: 401, message: 'verify failed' })
 
     verifyOtp.mockResolvedValueOnce({
       error: null,
@@ -306,7 +330,7 @@ describe('server runtime', () => {
       token_hash: 'token-hash',
     })
     expect(sendRedirect).toHaveBeenCalledWith(event, '/welcome', 302)
-    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'no-store' })
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, AUTH_NO_STORE_HEADERS)
   })
 
   it('rejects unsafe confirm redirect targets before verifying the token', async () => {
@@ -332,6 +356,6 @@ describe('server runtime', () => {
 
     expect(supabaseServerClient).not.toHaveBeenCalled()
     expect(verifyOtp).not.toHaveBeenCalled()
-    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'no-store' })
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, AUTH_NO_STORE_HEADERS)
   })
 })
