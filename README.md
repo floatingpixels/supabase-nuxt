@@ -270,6 +270,22 @@ export default defineEventHandler(async event => {
 
 If `redirect` is set to `true` in the module options, users will be automatically routed to the login page when they are not authenticated. If you want to allow access to "public" pages, you just need to add them in the `exclude` `redirect` option, and they will not re-direct unauthenticated users.
 
+The middleware appends the originally requested URL as a `redirect_to` query parameter, so your login page can send users back where they were headed:
+
+```vue [pages/login.vue]
+<script setup lang="ts">
+const route = useRoute()
+const redirectTo = typeof route.query.redirect_to === 'string' ? route.query.redirect_to : '/'
+
+// after a successful sign-in:
+// await navigateTo(redirectTo)
+</script>
+```
+
+No extra validation is needed here: `navigateTo` rejects absolute and protocol-relative URLs unless explicitly told otherwise, and when you instead thread `redirect_to` through the `/auth/confirm` or `/auth/callback` routes, those validate it server-side with `getRelativeRedirectPath` (importable from `#supabase/server` for custom routes).
+
+The auth check itself, `useSupabaseUser`, is a one-shot async function: it verifies the current session's claims when called (on every navigation, in the middleware's case) and does not subscribe to auth state changes. If your UI needs to react to sign-in/sign-out without a navigation, listen to `useSupabaseClient().auth.onAuthStateChange` yourself.
+
 ### Error Handling
 
 When an authentication error occurs, an exception is thrown. You can create an error page in the root of your app, to show an appropriate error message, clear the error and send the user to an appropriate route to continue. Here is an example for `error.vue`:

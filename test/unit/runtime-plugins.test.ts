@@ -173,9 +173,45 @@ describe('runtime plugins', () => {
 
     expect(addRouteMiddleware).toHaveBeenCalledTimes(1)
     const middleware = addRouteMiddleware.mock.calls[0]![1]
-    await middleware({ path: '/private' })
+    await middleware({ path: '/private', fullPath: '/private?tab=2' })
 
-    expect(navigateTo).toHaveBeenCalledWith('/sign-in', { redirectCode: 302 })
+    // The intended destination travels along so the login page can return
+    // the user after sign-in.
+    expect(navigateTo).toHaveBeenCalledWith(
+      { path: '/sign-in', query: { redirect_to: '/private?tab=2' } },
+      { redirectCode: 302 },
+    )
+  })
+
+  it('treats exclude patterns as literals apart from the * wildcard', async () => {
+    useRuntimeConfig.mockReturnValue({
+      public: {
+        supabase: {
+          redirectOptions: {
+            login: '/sign-in',
+            exclude: ['/metrics+live', '/admin.old'],
+          },
+        },
+      },
+    })
+    useSupabaseUser.mockResolvedValue({
+      data: null,
+      error: null,
+    })
+
+    const plugin = (await import('../../src/runtime/plugins/middleware-auth-redirect')).default as unknown as PluginWithoutReturn
+    plugin.setup()
+    const middleware = addRouteMiddleware.mock.calls[0]![1]
+
+    // Exact literal matches are excluded, even with regex metacharacters.
+    await middleware({ path: '/metrics+live', fullPath: '/metrics+live' })
+    await middleware({ path: '/admin.old', fullPath: '/admin.old' })
+    expect(navigateTo).not.toHaveBeenCalled()
+
+    // Paths that only match when metacharacters are interpreted are not.
+    await middleware({ path: '/metricslive', fullPath: '/metricslive' })
+    await middleware({ path: '/adminXold', fullPath: '/adminXold' })
+    expect(navigateTo).toHaveBeenCalledTimes(2)
   })
 
   it('skips redirects for excluded paths and authenticated users', async () => {
@@ -198,9 +234,9 @@ describe('runtime plugins', () => {
     plugin.setup()
     const middleware = addRouteMiddleware.mock.calls[0]![1]
 
-    await middleware({ path: '/public/docs' })
-    await middleware({ path: '/sign-in' })
-    await middleware({ path: '/private' })
+    await middleware({ path: '/public/docs', fullPath: '/public/docs' })
+    await middleware({ path: '/sign-in', fullPath: '/sign-in' })
+    await middleware({ path: '/private', fullPath: '/private' })
 
     expect(navigateTo).not.toHaveBeenCalled()
   })
