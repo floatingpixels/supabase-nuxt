@@ -5,6 +5,10 @@
   "repository": "floatingpixels/supabase-nuxt",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@11.4.0",
+  "engines": {
+    "node": ">=22"
+  },
   "exports": {
     ".": {
       "types": "./dist/types.d.mts",
