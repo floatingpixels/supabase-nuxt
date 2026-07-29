@@ -23,8 +23,7 @@ export default defineConfig({
         ...bunStubConfig,
         test: {
           name: 'unit',
-          include: ['test/{e2e,unit}/**/*.{test,spec}.ts'],
-          exclude: ['**/playwright/**'],
+          include: ['test/unit/**/*.{test,spec}.ts'],
           environment: 'node',
         },
       },
@@ -33,6 +32,7 @@ export default defineConfig({
         test: {
           name: 'nuxt',
           include: ['test/nuxt/*.{test,spec}.ts'],
+          setupFiles: [r('./test/nuxt/setup.ts')],
           environment: 'nuxt',
           environmentOptions: {
             nuxt: {
