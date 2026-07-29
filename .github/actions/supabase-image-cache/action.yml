@@ -23,7 +23,9 @@ runs:
       uses: actions/cache@v4
       with:
         path: /tmp/supabase-images.tar.zst
-        key: supabase-images-${{ runner.os }}-${{ steps.key.outputs.version }}-${{ hashFiles('supabase/config.toml') }}
+        # v2: the save step originally archived only public.ecr.aws images and
+        # missed the ghcr.io ones; the bump retires those incomplete archives.
+        key: supabase-images-v2-${{ runner.os }}-${{ steps.key.outputs.version }}-${{ hashFiles('supabase/config.toml') }}
 
     - name: Load cached images
       if: steps.cache.outputs.cache-hit == 'true'

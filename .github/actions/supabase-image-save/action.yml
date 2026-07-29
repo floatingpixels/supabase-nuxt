@@ -11,7 +11,9 @@ runs:
     - name: Archive Supabase images
       shell: bash
       run: |
-        images=$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^public\.ecr\.aws/supabase/' || true)
+        # The CLI pulls from two registries: public.ecr.aws for the smaller
+        # images and ghcr.io for the large ones (postgres, gotrue, studio, …).
+        images=$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^(public\.ecr\.aws|ghcr\.io)/supabase/' || true)
         if [ -z "$images" ]; then
           echo "No Supabase images present; skipping archive."
           exit 0
