@@ -129,6 +129,8 @@ export default defineNuxtModule<ModuleOptions>({
           "declare module '#supabase/server' {",
           `  const supabaseServerClient: typeof import('${resolve('./runtime/server/services')}').supabaseServerClient`,
           `  const supabaseServiceRole: typeof import('${resolve('./runtime/server/services')}').supabaseServiceRole`,
+          `  const getRelativeRedirectPath: typeof import('${resolve('./runtime/server/services')}').getRelativeRedirectPath`,
+          `  const setAuthNoStoreHeaders: typeof import('${resolve('./runtime/server/services')}').setAuthNoStoreHeaders`,
           // `  const serverSupabaseUser: typeof import('${resolve('./runtime/server/services')}').serverSupabaseUser`,
           '}',
         ].join('\n'),

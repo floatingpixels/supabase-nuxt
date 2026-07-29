@@ -196,13 +196,15 @@ If you want to customize the confirmation route, you can do so by creating a ser
 
 ```ts [server/api/confirm.ts]
 import { EmailOtpType } from '@supabase/supabase-js'
-import { supabaseServerClient } from '#supabase/server'
+import { supabaseServerClient, getRelativeRedirectPath, setAuthNoStoreHeaders } from '#supabase/server'
 
 export default defineEventHandler(async event => {
+  setAuthNoStoreHeaders(event)
+
   const query = getQuery(event)
   const token_hash = query.token_hash as string
   const type = query.type as EmailOtpType | null
-  const redirect_to = (query.redirect_to as string) ?? '/'
+  const redirectTo = getRelativeRedirectPath(query.redirect_to)
 
   if (!token_hash || !type) {
     throw createError({ statusMessage: 'Invalid token' })
@@ -215,7 +217,8 @@ export default defineEventHandler(async event => {
     throw createError({ statusMessage: error.message })
   }
 
-  await sendRedirect(event, redirect_to, 302)
+  setAuthNoStoreHeaders(event)
+  await sendRedirect(event, redirectTo, 302)
 })
 ```
 
@@ -240,12 +243,14 @@ You can customize the callback by creating your own server route, and point to i
 > ⚠️ You can use the provided callback route at `/auth/callback`, the implementation of a custom callback is optional!
 
 ```ts [server/api/callback.ts]
-import { supabaseServerClient } from '#supabase/server'
+import { supabaseServerClient, getRelativeRedirectPath, setAuthNoStoreHeaders } from '#supabase/server'
 
 export default defineEventHandler(async event => {
+  setAuthNoStoreHeaders(event)
+
   const query = getQuery(event)
   const code = query.code as string
-  const redirect_to = (query.redirect_to as string) ?? '/'
+  const redirectTo = getRelativeRedirectPath(query.redirect_to)
 
   if (!code) {
     throw createError({ statusMessage: 'No code provided' })
@@ -258,7 +263,8 @@ export default defineEventHandler(async event => {
     throw createError({ statusMessage: error.message })
   }
 
-  await sendRedirect(event, redirect_to, 302)
+  setAuthNoStoreHeaders(event)
+  await sendRedirect(event, redirectTo, 302)
 })
 ```
 

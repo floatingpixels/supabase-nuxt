@@ -289,6 +289,32 @@ describe('server runtime', () => {
 
     expect(exchangeCodeForSession).toHaveBeenCalledWith('oauth-code')
     expect(sendRedirect).toHaveBeenCalledWith(event, '/dashboard', 302)
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'no-store' })
+  })
+
+  it('rejects unsafe callback redirect targets before exchanging the code', async () => {
+    const event = { path: '/auth/callback' } as unknown as RouteEvent
+    const exchangeCodeForSession = vi.fn()
+    supabaseServerClient.mockResolvedValue({
+      auth: {
+        exchangeCodeForSession,
+      },
+    })
+
+    const callbackHandler = (await import('../../src/runtime/server/auth/callback')).default
+
+    for (const redirect_to of ['https://example.com/dashboard', '//example.com/dashboard', '/\\example.com', '/%2fexample.com', '/%2Fexample.com', '/\t/evil.com', '/a\u007Fb']) {
+      getQuery.mockReturnValue({
+        code: 'oauth-code',
+        redirect_to,
+      })
+
+      await expect(callbackHandler(event)).rejects.toThrow('Invalid redirect_to')
+    }
+
+    expect(supabaseServerClient).not.toHaveBeenCalled()
+    expect(exchangeCodeForSession).not.toHaveBeenCalled()
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'no-store' })
   })
 
   it('handles confirm auth validation, verification errors, and success redirects', async () => {
@@ -327,5 +353,32 @@ describe('server runtime', () => {
       token_hash: 'token-hash',
     })
     expect(sendRedirect).toHaveBeenCalledWith(event, '/welcome', 302)
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'no-store' })
+  })
+
+  it('rejects unsafe confirm redirect targets before verifying the token', async () => {
+    const event = { path: '/auth/confirm' } as unknown as RouteEvent
+    const verifyOtp = vi.fn()
+    supabaseServerClient.mockResolvedValue({
+      auth: {
+        verifyOtp,
+      },
+    })
+
+    const confirmHandler = (await import('../../src/runtime/server/auth/confirm')).default
+
+    for (const redirect_to of ['https://example.com/welcome', '//example.com/welcome', '/\\example.com', '/%5cexample.com', '/%5Cexample.com', '/\t/evil.com', '/a\u007Fb']) {
+      getQuery.mockReturnValue({
+        token_hash: 'token-hash',
+        type: 'magiclink',
+        redirect_to,
+      })
+
+      await expect(confirmHandler(event)).rejects.toThrow('Invalid redirect_to')
+    }
+
+    expect(supabaseServerClient).not.toHaveBeenCalled()
+    expect(verifyOtp).not.toHaveBeenCalled()
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'no-store' })
   })
 })
