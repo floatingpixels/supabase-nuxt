@@ -12,6 +12,7 @@ const parseCookies = vi.fn()
 const setCookie = vi.fn()
 const setResponseHeaders = vi.fn()
 const useSupabaseUser = vi.fn()
+const supabaseServerClient = vi.fn()
 
 type PluginWithSetup<T> = {
   setup: () => Promise<T>
@@ -48,6 +49,10 @@ vi.mock('h3', () => ({
 
 vi.mock('../../src/runtime/composables/useSupabaseUser', () => ({
   useSupabaseUser,
+}))
+
+vi.mock('#supabase/server', () => ({
+  supabaseServerClient,
 }))
 
 describe('runtime plugins', () => {
@@ -100,32 +105,11 @@ describe('runtime plugins', () => {
     })
   })
 
-  it('creates the server client with cookies and configured clientOptions', async () => {
+  it('serves the server plugin from the same request-scoped client as supabaseServerClient', async () => {
     const event = { context: {} }
     const serverClient = { kind: 'server-client' }
-    useRuntimeConfig.mockReturnValue({
-      public: {
-        supabase: {
-          url: 'https://project.supabase.co',
-          publishableKey: 'publishable-key',
-          clientOptions: {
-            auth: {
-              persistSession: false,
-            },
-            global: {
-              headers: {
-                'x-test': '1',
-              },
-            },
-          },
-        },
-      },
-    })
     useRequestEvent.mockReturnValue(event)
-    parseCookies.mockReturnValue({
-      sb: 'cookie-value',
-    })
-    createServerClient.mockReturnValue(serverClient)
+    supabaseServerClient.mockResolvedValue(serverClient)
 
     const plugin = (await import('../../src/runtime/plugins/supabase.server')).default as unknown as PluginWithSetup<{
       provide: {
@@ -136,21 +120,12 @@ describe('runtime plugins', () => {
     }>
     const result = await plugin.setup()
 
-    expect(createServerClient).toHaveBeenCalledTimes(1)
-    const options = createServerClient.mock.calls[0]![2]
-    expect(options.auth).toEqual({ persistSession: false })
-    expect(options.global).toEqual({
-      headers: {
-        'x-test': '1',
-      },
-    })
-    expect(options.cookies.getAll()).toEqual([{ name: 'sb', value: 'cookie-value' }])
-    options.cookies.setAll(
-      [{ name: 'next-cookie', value: 'next-value', options: { httpOnly: true } }],
-      { 'Cache-Control': 'private, no-store' },
-    )
-    expect(setCookie).toHaveBeenCalledWith(event, 'next-cookie', 'next-value', { httpOnly: true })
-    expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'private, no-store' })
+    // The plugin delegates instead of building its own client, so SSR and
+    // server routes share one auth storage and one cookie adapter. Two clients
+    // would each hold their own storage and could rotate the same refresh
+    // token concurrently, losing one of the two rotations.
+    expect(supabaseServerClient).toHaveBeenCalledWith(event)
+    expect(createServerClient).not.toHaveBeenCalled()
     expect(result).toEqual({
       provide: {
         supabase: {

@@ -416,6 +416,35 @@ export default eventHandler(async event => {
 })
 ```
 
+### Always await Supabase calls before the response is sent
+
+Supabase rotates the access token in the background, and the rotated session is
+written back to the browser as `sb-*-auth-token` cookies on the response of the
+request that triggered the refresh. Response headers can only be set while the
+response is still open, so **every Supabase call must be awaited before the
+handler returns or the page finishes rendering**.
+
+```ts
+// ✅ awaited: the refreshed session is written to the response
+const { data } = await client.from('libraries').select('*')
+
+// ❌ not awaited: the refresh may land after the response is sent, and the
+// rotated session can never reach the browser
+client.from('libraries').select('*')
+```
+
+The same applies during SSR. `useAsyncData` and `useFetch` are awaited as part
+of rendering and are safe; their `useLazyAsyncData` and `useLazyFetch` variants
+are not awaited before the response is committed, so a Supabase call inside one
+of them can refresh the session too late for its cookies to be saved.
+
+When that happens the module raises an error naming the cookies it could not
+persist, rather than letting the request continue as if the session had been
+stored. The error never contains cookie values or tokens. If you see it, find
+the Supabase call that is not awaited: the browser is still holding the
+superseded refresh token, so it will keep re-refreshing and can eventually be
+signed out.
+
 ### supabaseServiceRole
 
 Make requests with super admin rights to the Supabase API with the `supabaseServiceRole` service. This function is designed to work only in [server routes](https://nuxt.com/docs/guide/directory-structure/server#server-routes), there is no Vue composable equivalent.
