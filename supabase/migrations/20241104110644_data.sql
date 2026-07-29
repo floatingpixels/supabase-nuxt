@@ -47,6 +47,12 @@ FOR SELECT
 TO authenticated
 USING (true);
 
+-- Newer Supabase Postgres images no longer grant table privileges to the
+-- API roles by default; RLS policies alone are not sufficient for access.
+GRANT SELECT ON TABLE public.members TO authenticated;
+GRANT SELECT ON TABLE public.posts TO authenticated;
+GRANT SELECT ON TABLE public.comments TO authenticated;
+
 CREATE TABLE IF NOT EXISTS public.service_only_check (
   id int PRIMARY KEY,
   check_name text NOT NULL

@@ -13,7 +13,7 @@ export default createConfigForNuxt({
   dirs: {
     src: ['./playground'],
   },
-}).append(eslintConfigPrettier, {
+}).append({ ignores: ['.remember/**'] }, eslintConfigPrettier, {
   rules: {
     'vue/multi-word-component-names': 'off',
   },
