@@ -55,29 +55,35 @@ They do require a reachable local Supabase stack.
 
 ## Commands
 
-### `pnpm test`
+### `pnpm test:unit`
 
 Runs:
 
 1. `nuxi prepare playground`
-2. `tsc --noEmit`
-3. `vitest`
+2. `tsc --noEmit` (covers the type-level files in `test/types`)
+3. `vitest run --project=unit`
 
-This covers:
+Fully hermetic: no dev server, no Supabase, no network. This is what CI's
+validate job runs (with `--coverage` appended).
 
-- type-level test files in `test/types`
-- unit tests in `test/unit`
-- Nuxt runtime tests in `test/nuxt`
+### `pnpm test:nuxt`
 
-Notes:
+Runs the Nuxt runtime tests (`test/nuxt`) only. Requires a running local
+Supabase stack. A setup guard (`test/nuxt/setup.ts`) probes
+`/auth/v1/health` first and fails fast with an actionable message when the
+stack is down, instead of letting the tests fail with confusing assertion
+errors.
 
-- does not start a Nuxt dev server
-- does not start Supabase for you
-- expects local Supabase to already be running if the live Nuxt smoke tests are included
+### `pnpm test`
+
+Runs everything `test:unit` and `test:nuxt` cover, in one vitest invocation.
+Expects local Supabase to already be running (same guard as `test:nuxt`).
 
 ### `pnpm test:pw`
 
-Runs Playwright tests in `test/playwright`.
+Runs Playwright tests in `test/playwright`, including the request-level
+auth-route checks in `auth-routes.test.ts` (status codes, redirect
+suppression, cache headers over real HTTP).
 
 Notes:
 
@@ -87,16 +93,10 @@ Notes:
 
 ### `pnpm test:e2e`
 
-Runs:
-
-1. `db:start`
-2. `db:reset`
-3. `test:pw`
-4. `db:stop`
-
-This is the fully managed browser E2E command.
-
-It starts the local Supabase stack automatically, resets the database, runs Playwright, and shuts Supabase down afterwards.
+Runs `scripts/e2e.sh`: starts the local Supabase stack, resets the database,
+runs Playwright, and always stops the stack again — including when tests fail
+or the run is interrupted (shell `trap`). Extra arguments are forwarded to
+Playwright, e.g. `pnpm test:e2e --project='Desktop Chrome'`.
 
 ## Local Development Expectations
 
@@ -123,6 +123,27 @@ To avoid flaky tests:
 - avoid ad hoc changes that are not reflected in tests
 - make test flows self-contained
 
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs two parallel jobs on pushes and pull requests
+to `main`:
+
+- **Validate** — lint, typecheck, and the hermetic unit suite with coverage
+  (`pnpm test:unit --coverage`). Needs no Docker and finishes in seconds.
+- **E2E** — installs Playwright Chromium, starts the local Supabase stack,
+  seeds it, and runs `test:nuxt` plus the Playwright suite. Chromium only:
+  the module's session handling is server-side, and the full three-engine
+  matrix stays available locally via `pnpm test:e2e`. The Playwright report
+  is uploaded as an artifact with short retention, because traces can contain
+  session cookies of local fixture users.
+
+The Supabase stack's Docker images are cached in the GitHub Actions cache
+(`.github/actions/supabase-image-cache` / `supabase-image-save`, adapted from
+besmyle-portal). Anonymous registry pull limits are shared across the IPs of
+GitHub-hosted runners, so uncached pulls fail sporadically; the cache key is
+derived from the supabase CLI version and `supabase/config.toml`, so it
+invalidates exactly when the image set changes.
+
 ## Current Coverage Summary
 
 The suite currently covers:
@@ -131,7 +152,7 @@ The suite currently covers:
 - generated `#supabase/server` type exposure
 - `useSupabaseUser()` normalization behavior
 - browser and server Supabase plugin setup
-- auth redirect middleware behavior
-- server helper memoization
-- callback and confirm handler behavior
+- auth redirect middleware behavior, pattern escaping, and redirect_to forwarding
+- server helper memoization and the cookie write adapter (chunking, committed responses, write failures)
+- callback and confirm handler behavior, including HTTP-level status, redirect, and cache-header checks
 - live login, redirect, session persistence, query, service role, and RLS smoke paths
