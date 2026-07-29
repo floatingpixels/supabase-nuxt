@@ -125,7 +125,7 @@ describe('server runtime', () => {
     })
 
     const { supabaseServiceRole } = await import('../../src/runtime/server/services/supabaseServiceRole')
-    await expect(supabaseServiceRole(event)).rejects.toThrow('Missing `SUPABASE_SERVICE_ROLE_KEY` in `.env`')
+    await expect(supabaseServiceRole(event)).rejects.toThrow('Missing `NUXT_SUPABASE_SERVICE_ROLE_KEY` in `.env`')
     expect(useRuntimeConfig).toHaveBeenCalledWith(event)
 
     const serviceClient = { kind: 'service-role-client' }

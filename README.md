@@ -451,7 +451,7 @@ It provides similar functionality as the `supabaseServerClient` but it provides 
 
 The service-role client is isolated from the incoming user's browser session. It does not read or write Supabase auth cookies, so database requests always use the configured service role key instead of a signed-in user's access token.
 
-The client is initialized with the `NUXT_SUPABASE_SERVICE_ROLE_KEY` you must have in your environment. Check out the doc if you want to know more about [Supabase keys](https://supabase.com/docs/learn/auth-deep-dive/auth-deep-dive-jwts#jwts-in-supabase).
+The client is initialized with the `NUXT_SUPABASE_SERVICE_ROLE_KEY` you must have in your environment. Check out the doc if you want to know more about [Supabase API keys](https://supabase.com/docs/guides/api/api-keys).
 
 > ⚠️ The service key gives admin access to your database, be careful to not expose it in your client side code or in your git repository.
 
