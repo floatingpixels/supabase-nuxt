@@ -34,7 +34,8 @@ coverage
 *.lcov
 .nyc_output
 test-results
-playwright*/
+# Playwright output only — a bare `playwright*/` would also ignore test/playwright/
+playwright-report/
 
 # VSCode
 .vscode/*
