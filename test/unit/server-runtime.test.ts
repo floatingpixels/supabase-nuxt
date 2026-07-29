@@ -97,6 +97,53 @@ describe('server runtime', () => {
     expect(setResponseHeaders).toHaveBeenCalledWith(event, { 'Cache-Control': 'private, no-store' })
   })
 
+  it('skips cookie writes when the response was already sent and logs errors without cookie values', async () => {
+    const client = { kind: 'server-client' }
+    const event = {
+      context: {},
+      node: { res: { headersSent: true } },
+    } as unknown as EventWithContext
+    useRuntimeConfig.mockReturnValue({
+      public: {
+        supabase: {
+          url: 'https://project.supabase.co',
+          publishableKey: 'publishable-key',
+          clientOptions: {},
+        },
+      },
+    })
+    createServerClient.mockReturnValue(client)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { supabaseServerClient: getClient } = await import('../../src/runtime/server/services/supabaseServerClient')
+    await getClient(event)
+
+    const options = createServerClient.mock.calls[0]![2]
+    options.cookies.setAll([{ name: 'sb-auth-token.0', value: 'secret-session' }])
+
+    expect(setCookie).not.toHaveBeenCalled()
+    expect(setResponseHeaders).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0]![0]).toContain('sb-auth-token.0')
+    expect(warn.mock.calls[0]![0]).not.toContain('secret-session')
+
+    const res = (event as unknown as { node: { res: { headersSent: boolean } } }).node.res
+    res.headersSent = false
+    setCookie.mockImplementationOnce(() => {
+      throw new Error('boom')
+    })
+    options.cookies.setAll([{ name: 'sb-auth-token.0', value: 'secret-session' }])
+
+    expect(error).toHaveBeenCalledTimes(1)
+    expect(error.mock.calls[0]![0]).toContain('sb-auth-token.0')
+    expect(error.mock.calls[0]![0]).not.toContain('secret-session')
+    expect(error.mock.calls[0]![1]).toBeInstanceOf(Error)
+
+    warn.mockRestore()
+    error.mockRestore()
+  })
+
   it('creates a cookie-free service role client and throws when the key is missing', async () => {
     const event = { context: {} } as unknown as EventWithContext
     useRuntimeConfig.mockReturnValueOnce({

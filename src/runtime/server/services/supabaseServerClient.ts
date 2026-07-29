@@ -43,13 +43,22 @@ export const supabaseServerClient = async <T>(event: H3Event): Promise<SupabaseC
           cookiesToSet: Array<{ name: string, value: string, options?: CookieSerializeOptions }>,
           headers: Record<string, string> = {},
         ) {
+          const cookieNames = cookiesToSet.map(({ name }) => name).join(', ')
+          if (event.node?.res?.headersSent) {
+            console.warn(
+              `[supabase-nuxt] Could not set auth cookies (${cookieNames}): the response was already sent. `
+              + 'A Supabase call likely triggered a token refresh after the response was committed, '
+              + 'e.g. a non-awaited query or a lazy asyncData fetch during SSR.',
+            )
+            return
+          }
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
               setCookie(event, name, value, options)
             })
             setResponseHeaders(event, headers)
-          } catch {
-            console.error('Error setting cookies', cookiesToSet)
+          } catch (error) {
+            console.error(`[supabase-nuxt] Error setting cookies (${cookieNames})`, error)
           }
         },
       },
