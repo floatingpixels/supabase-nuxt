@@ -1,5 +1,5 @@
 import { useSupabaseUser } from '../composables/useSupabaseUser'
-import { defineNuxtPlugin, addRouteMiddleware, defineNuxtRouteMiddleware, useRuntimeConfig, navigateTo } from '#imports'
+import { defineNuxtPlugin, addRouteMiddleware, defineNuxtRouteMiddleware, useRuntimeConfig, useError, navigateTo } from '#imports'
 import type { RouteLocationNormalized } from 'vue-router'
 
 export default defineNuxtPlugin({
@@ -8,6 +8,12 @@ export default defineNuxtPlugin({
     addRouteMiddleware(
       '01-global-auth-redirect',
       defineNuxtRouteMiddleware(async (to: RouteLocationNormalized) => {
+        // The error page renders through the app, so this middleware runs for
+        // it too. Redirecting there would replace every error response with a
+        // 302 to the login page — e.g. a 400 from /auth/confirm would bounce
+        // to /sign-in instead of showing the error.
+        if (useError().value) return
+
         const config = useRuntimeConfig().public.supabase
         const { login, exclude } = config.redirectOptions
 

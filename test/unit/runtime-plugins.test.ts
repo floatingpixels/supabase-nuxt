@@ -12,6 +12,7 @@ const parseCookies = vi.fn()
 const setCookie = vi.fn()
 const setResponseHeaders = vi.fn()
 const useSupabaseUser = vi.fn()
+const useError = vi.fn()
 const supabaseServerClient = vi.fn()
 
 type PluginWithSetup<T> = {
@@ -33,6 +34,7 @@ vi.mock('#imports', () => ({
   addRouteMiddleware,
   defineNuxtRouteMiddleware,
   useRuntimeConfig,
+  useError,
   navigateTo,
 }))
 
@@ -59,6 +61,7 @@ describe('runtime plugins', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    useError.mockReturnValue({ value: null })
   })
 
   it('creates the browser client with configured clientOptions', async () => {
@@ -181,6 +184,31 @@ describe('runtime plugins', () => {
       { path: '/sign-in', query: { redirect_to: '/private?tab=2' } },
       { redirectCode: 302 },
     )
+  })
+
+  it('does not redirect while the error page is rendering', async () => {
+    useRuntimeConfig.mockReturnValue({
+      public: {
+        supabase: {
+          redirectOptions: {
+            login: '/sign-in',
+            exclude: [],
+          },
+        },
+      },
+    })
+    // The error page renders through the app; hijacking it into a login
+    // redirect would replace e.g. a 400 from /auth/confirm with a 302.
+    useError.mockReturnValue({ value: { statusCode: 400 } })
+
+    const plugin = (await import('../../src/runtime/plugins/middleware-auth-redirect')).default as unknown as PluginWithoutReturn
+    plugin.setup()
+    const middleware = addRouteMiddleware.mock.calls[0]![1]
+
+    await middleware({ path: '/auth/confirm', fullPath: '/auth/confirm?token_hash=x&type=email' })
+
+    expect(useSupabaseUser).not.toHaveBeenCalled()
+    expect(navigateTo).not.toHaveBeenCalled()
   })
 
   it('treats exclude patterns as literals apart from the * wildcard', async () => {
