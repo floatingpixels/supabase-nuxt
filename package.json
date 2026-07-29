@@ -44,7 +44,7 @@
     "lint": "eslint .",
     "test": "nuxi prepare playground && pnpm exec tsc --noEmit --pretty false && pnpm vitest",
     "test:unit": "nuxi prepare playground && pnpm exec tsc --noEmit --pretty false && vitest run --project=unit",
-    "test:nuxt": "vitest run --project=nuxt",
+    "test:nuxt": "nuxi prepare playground && vitest run --project=nuxt",
     "test:watch": "vitest watch",
     "test:pw": "playwright test test/playwright/",
     "test:e2e": "bash scripts/e2e.sh",
