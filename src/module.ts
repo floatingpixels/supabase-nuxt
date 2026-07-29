@@ -15,7 +15,7 @@ export default defineNuxtModule<ModuleOptions>({
     name: 'supabase-nuxt',
     configKey: 'supabase',
     compatibility: {
-      nuxt: '>3.0.0',
+      nuxt: '>=3.0.0',
     },
   },
   defaults: {
@@ -42,18 +42,22 @@ export default defineNuxtModule<ModuleOptions>({
     const publicSupabaseConfig = nuxt.options.runtimeConfig.public.supabase as Partial<ModuleOptions> | undefined
     const supabaseConfig = nuxt.options.runtimeConfig.supabase as { serviceRoleKey?: string } | undefined
 
-    // Make sure url and key are set either in environment or module options
-    if (!process.env.NUXT_PUBLIC_SUPABASE_URL && !options.url && !publicSupabaseConfig?.url) {
-      console.warn('Missing `NUXT_PUBLIC_SUPABASE_URL` in environment or `url` in module options')
-    }
-    if (
-      !process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-      && !options.publishableKey
-      && !publicSupabaseConfig?.publishableKey
-    ) {
-      console.warn(
-        'Missing `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in environment or `publishableKey` in module options',
-      )
+    // Make sure url and key are set either in environment or module options.
+    // Dev only: production builds routinely receive these via NUXT_* env vars
+    // at runtime, which the build cannot see.
+    if (nuxt.options.dev) {
+      if (!process.env.NUXT_PUBLIC_SUPABASE_URL && !options.url && !publicSupabaseConfig?.url) {
+        console.warn('Missing `NUXT_PUBLIC_SUPABASE_URL` in environment or `url` in module options')
+      }
+      if (
+        !process.env.NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+        && !options.publishableKey
+        && !publicSupabaseConfig?.publishableKey
+      ) {
+        console.warn(
+          'Missing `NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in environment or `publishableKey` in module options',
+        )
+      }
     }
 
     nuxt.options.runtimeConfig.public.supabase = defu(publicSupabaseConfig, {
@@ -148,7 +152,6 @@ export default defineNuxtModule<ModuleOptions>({
           ...(config.optimizeDeps?.include || []),
           '@floatingpixels/supabase-nuxt > @supabase/postgrest-js',
           '@floatingpixels/supabase-nuxt > @supabase/supabase-js',
-          '@floatingpixels/supabase-nuxt > cookie',
         ],
       }
     })

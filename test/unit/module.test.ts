@@ -20,6 +20,7 @@ type TestNuxt = {
     }
     alias: Record<string, string>
     buildDir: string
+    dev?: boolean
   }
   hook: (name: string, callback: HookCallback) => void
 }
@@ -162,11 +163,10 @@ describe('module contract', () => {
       'existing-dep',
       '@floatingpixels/supabase-nuxt > @supabase/postgrest-js',
       '@floatingpixels/supabase-nuxt > @supabase/supabase-js',
-      '@floatingpixels/supabase-nuxt > cookie',
     ])
   })
 
-  it('warns when public credentials are missing and skips redirect plugin when disabled', async () => {
+  it('warns in dev when public credentials are missing and skips redirect plugin when disabled', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const module = (await import('../../src/module')).default as unknown as TestModule
     const hooks: Record<string, HookCallback> = {}
@@ -178,6 +178,7 @@ describe('module contract', () => {
         },
         alias: {},
         buildDir: '/build',
+        dev: true,
       },
       hook: vi.fn((name: string, callback: HookCallback) => {
         hooks[name] = callback
@@ -204,6 +205,17 @@ describe('module contract', () => {
     expect(addPlugin).toHaveBeenCalledTimes(2)
     expect(addPlugin).not.toHaveBeenCalledWith('/resolved/runtime/plugins/middleware-auth-redirect')
     expect(hooks['nitro:config']).toBeTypeOf('function')
+
+    // Production builds routinely receive credentials via NUXT_* env vars at
+    // runtime, so the same setup outside dev stays silent.
+    warnSpy.mockClear()
+    nuxt.options.dev = false
+    await module.setup({
+      redirect: false,
+      redirectOptions: { login: '/login', exclude: [] },
+      clientOptions: {},
+    }, nuxt)
+    expect(warnSpy).not.toHaveBeenCalled()
   })
 
   it('extends existing runtime config instead of replacing it', async () => {

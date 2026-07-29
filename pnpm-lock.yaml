@@ -14,9 +14,6 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.111.0
         version: 2.111.0
-      cookie:
-        specifier: ^1.1.1
-        version: 1.1.1
       defu:
         specifier: ^6.1.7
         version: 6.1.7
@@ -69,6 +66,9 @@ importers:
       eslint-config-prettier:
         specifier: ^10.1.8
         version: 10.1.8(eslint@10.8.0(jiti@2.7.0))
+      h3:
+        specifier: ^1.15.11
+        version: 1.15.11
       happy-dom:
         specifier: ^20.11.1
         version: 20.11.1

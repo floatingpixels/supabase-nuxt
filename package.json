@@ -59,7 +59,6 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.111.0",
-    "cookie": "^1.1.1",
     "defu": "^6.1.7"
   },
   "devDependencies": {
@@ -79,6 +78,7 @@
     "changelogen": "^0.6.2",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
+    "h3": "^1.15.11",
     "happy-dom": "^20.11.1",
     "nuxt": "^4.5.1",
     "playwright-core": "^1.62.0",
