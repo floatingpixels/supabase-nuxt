@@ -68,6 +68,10 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
+      # Published-package topology: no workspace linking or hoisting.
+      - name: Run packed-consumer regression
+        run: pnpm test:consumer
+
       - name: Restore Supabase images
         id: supabase-images
         uses: ./.github/actions/supabase-image-cache

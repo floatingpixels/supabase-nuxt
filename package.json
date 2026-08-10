@@ -44,6 +44,7 @@
     "lint": "eslint .",
     "test": "nuxi prepare playground && pnpm exec tsc --noEmit --pretty false && pnpm vitest",
     "test:unit": "nuxi prepare playground && pnpm exec tsc --noEmit --pretty false && vitest run --project=unit",
+    "test:consumer": "node test/consumer/packed-vite-cookie-interop.test.mjs",
     "test:nuxt": "nuxi prepare playground && vitest run --project=nuxt",
     "test:watch": "vitest watch",
     "test:pw": "playwright test test/playwright/",

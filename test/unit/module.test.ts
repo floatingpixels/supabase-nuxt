@@ -162,6 +162,7 @@ describe('module contract', () => {
     expect(viteConfig.optimizeDeps.include).toEqual([
       'existing-dep',
       '@floatingpixels/supabase-nuxt > @supabase/postgrest-js',
+      '@floatingpixels/supabase-nuxt > @supabase/ssr > cookie',
       '@floatingpixels/supabase-nuxt > @supabase/supabase-js',
     ])
   })

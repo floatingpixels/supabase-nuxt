@@ -1,12 +1,13 @@
 # Testing
 
-This repository uses three testing layers:
+This repository uses four testing layers:
 
 - unit tests in `test/unit`
 - Nuxt runtime smoke tests in `test/nuxt`
 - browser end-to-end tests in `test/playwright`
+- a packed consumer browser regression test in `test/consumer`
 
-The tests run against the module wired into the local `playground/` app.
+The first three layers run against the module wired into the local `playground/` app. The packed consumer test uses a fresh temporary app instead.
 
 ## Test Layers
 
@@ -53,6 +54,18 @@ These tests use `@nuxt/test-utils/playwright` and run against the `playground/` 
 
 They do require a reachable local Supabase stack.
 
+### Packed Consumer
+
+Location: `test/consumer`
+
+Purpose:
+
+- pack the module exactly as a registry consumer receives it
+- install the tarball in an isolated pnpm Nuxt 4.5.2 app with no direct `cookie` dependency
+- verify a cold Vite dev start hydrates and initializes `useSupabaseClient()` without CommonJS/ESM errors
+
+This test uses dummy Supabase configuration and an auth-excluded page, so it does not require a live Supabase stack.
+
 ## Commands
 
 ### `pnpm test:unit`
@@ -73,6 +86,14 @@ Supabase stack. A setup guard (`test/nuxt/setup.ts`) probes
 `/auth/v1/health` first and fails fast with an actionable message when the
 stack is down, instead of letting the tests fail with confusing assertion
 errors.
+
+### `pnpm test:consumer`
+
+Builds and packs the module, installs the tarball into a temporary pnpm
+consumer, starts Nuxt with a cold dependency optimizer, and opens the fixture
+page in headless Chromium. The temporary consumer is removed whether the test
+passes or fails. This test needs registry access when its dependencies are not
+already present in the pnpm store, but it does not need Supabase or Docker.
 
 ### `pnpm test`
 
@@ -109,6 +130,7 @@ It is not required for:
 - `pnpm test`
 - `pnpm test:pw`
 - `pnpm test:e2e`
+- `pnpm test:consumer`
 
 ### Playground
 
@@ -130,8 +152,9 @@ to `main`:
 
 - **Validate** — lint, typecheck, and the hermetic unit suite with coverage
   (`pnpm test:unit --coverage`). Needs no Docker and finishes in seconds.
-- **E2E** — installs Playwright Chromium, starts the local Supabase stack,
-  seeds it, and runs `test:nuxt` plus the Playwright suite. Chromium only:
+- **E2E** — installs Playwright Chromium, runs the packed-consumer regression,
+  starts the local Supabase stack, seeds it, and runs `test:nuxt` plus the
+  Playwright suite. Chromium only:
   the module's session handling is server-side, and the full three-engine
   matrix stays available locally via `pnpm test:e2e`. The Playwright report
   is uploaded as an artifact with short retention, because traces can contain
@@ -156,3 +179,4 @@ The suite currently covers:
 - server helper memoization and the cookie write adapter (chunking, committed responses, write failures)
 - callback and confirm handler behavior, including HTTP-level status, redirect, and cache-header checks
 - live login, redirect, session persistence, query, service role, and RLS smoke paths
+- packed pnpm consumer hydration and Vite CommonJS dependency interoperability
