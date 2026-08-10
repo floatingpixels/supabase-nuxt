@@ -210,6 +210,9 @@ let browser
 let nuxt
 
 try {
+  console.log('Preparing @floatingpixels/supabase-nuxt...')
+  await runCommand(packageManager.command, pnpmArgs(['exec', 'nuxi', 'prepare', 'playground']), repoRoot)
+
   console.log('Packing @floatingpixels/supabase-nuxt...')
   await runCommand(packageManager.command, pnpmArgs(['pack', '--pack-destination', temporaryRoot]), repoRoot)
   const tarballName = (await readdir(temporaryRoot)).find(name => name.endsWith('.tgz'))
