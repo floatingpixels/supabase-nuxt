@@ -12,12 +12,26 @@ const repoRoot = fileURLToPath(new URL('../..', import.meta.url))
 const interopErrorPattern
   = /does not provide an export named ['"](?:parse|serialize)['"]|cookie.*(?:commonjs|esm)|(?:commonjs|esm).*cookie/i
 
-const findPnpmEntrypoint = async () => {
+const findPnpmLauncher = async () => {
+  if (process.platform === 'win32') {
+    return { command: 'pnpm.cmd', prefixArgs: [] }
+  }
+
   for (const directory of (process.env.PATH || '').split(delimiter)) {
     if (!directory) continue
 
     try {
-      return await realpath(join(directory, 'pnpm'))
+      const executable = join(directory, 'pnpm')
+      const entrypoint = await realpath(executable)
+      const source = await readFile(entrypoint, 'utf8')
+      const firstLine = source.split('\n', 1)[0]
+      const isNodeEntrypoint = /\.[cm]?js$/.test(entrypoint) || /^#!.*\bnode\b/.test(firstLine)
+
+      // Nix exposes a JavaScript entrypoint, while pnpm/action-setup exposes a POSIX shim.
+      // Only the JavaScript form can be passed to the current Node process directly.
+      return isNodeEntrypoint
+        ? { command: process.execPath, prefixArgs: [entrypoint] }
+        : { command: executable, prefixArgs: [] }
     } catch {
       // Keep searching PATH.
     }
@@ -26,9 +40,8 @@ const findPnpmEntrypoint = async () => {
   throw new Error('Could not find pnpm on PATH')
 }
 
-const pnpmEntrypoint = process.platform === 'win32' ? undefined : await findPnpmEntrypoint()
-const packageManager = process.platform === 'win32' ? 'pnpm.cmd' : process.execPath
-const pnpmArgs = args => pnpmEntrypoint ? [pnpmEntrypoint, ...args] : args
+const packageManager = await findPnpmLauncher()
+const pnpmArgs = args => [...packageManager.prefixArgs, ...args]
 
 const formatProcessFailure = (command, args, output) => [
   `Command failed: ${command} ${args.join(' ')}`,
@@ -74,7 +87,7 @@ const getAvailablePort = () => new Promise((resolve, reject) => {
 })
 
 const startNuxt = (consumerRoot, port) => {
-  const child = spawn(packageManager, pnpmArgs([
+  const child = spawn(packageManager.command, pnpmArgs([
     'exec',
     'nuxt',
     'dev',
@@ -198,7 +211,7 @@ let nuxt
 
 try {
   console.log('Packing @floatingpixels/supabase-nuxt...')
-  await runCommand(packageManager, pnpmArgs(['pack', '--pack-destination', temporaryRoot]), repoRoot)
+  await runCommand(packageManager.command, pnpmArgs(['pack', '--pack-destination', temporaryRoot]), repoRoot)
   const tarballName = (await readdir(temporaryRoot)).find(name => name.endsWith('.tgz'))
   assert.ok(tarballName, 'pnpm pack did not produce a tarball')
 
@@ -207,7 +220,7 @@ try {
   assert.equal(consumerPackage.dependencies.cookie, undefined, 'consumer must not declare cookie directly')
 
   console.log('Installing the tarball in an isolated pnpm consumer...')
-  await runCommand(packageManager, pnpmArgs(['install']), consumerRoot)
+  await runCommand(packageManager.command, pnpmArgs(['install']), consumerRoot)
   await assert.rejects(
     access(join(consumerRoot, 'node_modules', 'cookie')),
     error => error?.code === 'ENOENT',
