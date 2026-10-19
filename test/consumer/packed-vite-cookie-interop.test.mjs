@@ -11,6 +11,8 @@ import { chromium } from '@playwright/test'
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url))
 const interopErrorPattern
   = /does not provide an export named ['"](?:parse|serialize)['"]|cookie.*(?:commonjs|esm)|(?:commonjs|esm).*cookie/i
+// h3 v2's parseCookies on Nitro 2's v1 event: the module resolved a hoisted h3 2.x.
+const h3MismatchPattern = /headers\.get is not a function/
 
 const findPnpmLauncher = async () => {
   if (process.platform === 'win32') {
@@ -162,7 +164,10 @@ const createConsumer = async (consumerRoot, tarballPath) => {
     packageManager: 'pnpm@11.4.0',
     dependencies: {
       '@floatingpixels/supabase-nuxt': `file:${tarballPath}`,
-      nuxt: '4.5.2',
+      // A direct h3 2.x makes it the top-level, hoisted h3, as Nuxt 4.6's own
+      // tooling can. The module must still resolve the h3 1.x Nitro 2 runs on.
+      h3: '^2.0.5',
+      nuxt: '4.6.2',
       vue: '^3.5.0',
       'vue-router': '^4.0.0',
     },
@@ -200,6 +205,14 @@ onMounted(() => {
     <p id="hydrated">{{ hydrated ? 'hydrated' : 'server-rendered' }}</p>
     <p id="supabase-client">{{ client ? 'initialized' : 'missing' }}</p>
   </main>
+</template>
+`)
+  await writeFile(join(consumerRoot, 'app', 'pages', 'protected.vue'), `<template>
+  <main>protected</main>
+</template>
+`)
+  await writeFile(join(consumerRoot, 'app', 'pages', 'login.vue'), `<template>
+  <main>login</main>
 </template>
 `)
 }
@@ -260,6 +273,21 @@ try {
   )
 
   console.log('Packed consumer hydrated with an initialized Supabase client and no browser errors.')
+
+  // Without a session cookie, SSR auth on a protected page must redirect to
+  // the login page; reading the (absent) session cookies must not crash.
+  const protectedResponse = await fetch(`http://127.0.0.1:${port}/protected`, { redirect: 'manual' })
+  const protectedBody = await protectedResponse.text()
+  assert.equal(
+    protectedResponse.status,
+    302,
+    `signed-out SSR request to a protected page returned HTTP ${protectedResponse.status}, expected a 302 to /login\n\n${protectedBody.slice(0, 5_000)}`,
+  )
+  assert.doesNotMatch(protectedBody, h3MismatchPattern, 'the module resolved h3 2.x instead of its own h3 1.x')
+  assert.match(protectedResponse.headers.get('location') ?? '', /^\/login\?redirect_to=(?:%2F|\/)protected$/)
+  assert.doesNotMatch(nuxt.getOutput(), h3MismatchPattern, 'the module resolved h3 2.x instead of its own h3 1.x')
+
+  console.log('Signed-out SSR request to a protected page redirected to /login with h3 2.x hoisted.')
 } catch (error) {
   const failure = error instanceof Error ? error : new Error(String(error))
   if (nuxt?.getOutput()) {

@@ -20,6 +20,9 @@ importers:
       defu:
         specifier: ^6.1.7
         version: 6.1.7
+      h3:
+        specifier: ^1.15.11
+        version: 1.15.11
     devDependencies:
       '@nuxt/devtools':
         specifier: 4.0.0-alpha.7
@@ -69,9 +72,6 @@ importers:
       eslint-config-prettier:
         specifier: ^10.1.8
         version: 10.1.8(eslint@10.13.0(jiti@2.7.0))
-      h3:
-        specifier: ^1.15.11
-        version: 1.15.11
       happy-dom:
         specifier: ^21.0.3
         version: 21.0.3
