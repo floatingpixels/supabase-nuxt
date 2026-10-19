@@ -1,5 +1,8 @@
 {
   "extends": "./playground/.nuxt/tsconfig.json",
+  // Nuxt >= 4.6 types server code (H3Event, NitroConfig) through augments the
+  // generated nuxt.d.ts references; `files` is not subject to `exclude`.
+  "files": ["playground/.nuxt/nuxt.d.ts"],
   "exclude": ["dist", "playground", "docs"],
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/types/index.d.ts", "test/**/*.ts"]
 }

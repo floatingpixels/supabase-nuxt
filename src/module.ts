@@ -7,7 +7,9 @@ import {
   extendViteConfig,
   addImportsDir,
 } from '@nuxt/kit'
-import { defu } from 'defu'
+// Default import: Nuxt's `paths` point type resolution at defu's legacy
+// `export =` typings, where tsgo (TS 7) rejects the named import.
+import defu from 'defu'
 import type { ModuleOptions } from './types'
 
 export default defineNuxtModule<ModuleOptions>({
@@ -60,6 +62,8 @@ export default defineNuxtModule<ModuleOptions>({
       }
     }
 
+    // The app's generated runtime config types are inferred from the values
+    // resolved here, so they can't describe this module's optional inputs.
     nuxt.options.runtimeConfig.public.supabase = defu(publicSupabaseConfig, {
       url: options.url ?? '',
       publishableKey: options.publishableKey ?? '',
@@ -76,7 +80,7 @@ export default defineNuxtModule<ModuleOptions>({
           autoRefreshToken: true,
         },
       },
-    })
+    }) as typeof nuxt.options.runtimeConfig.public.supabase
 
     nuxt.options.runtimeConfig.supabase = defu(supabaseConfig, {
       serviceRoleKey: options.secretKey ?? '',

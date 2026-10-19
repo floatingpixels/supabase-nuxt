@@ -11,3 +11,12 @@ allowBuilds:
 # The committed lockfile plus --frozen-lockfile installs remain the
 # supply-chain control (same setting as besmyle-portal).
 minimumReleaseAge: 0
+
+overrides:
+  # TypeScript 7 (tsgo) through typescript-native-bridge, which keeps the
+  # classic `typescript` API that tsc, vue-tsc and nuxt-module-build import
+  # (plain typescript@7 breaks them). Declared here AND as the `typescript`
+  # devDependency alias on purpose: keep both in sync and pinned exactly
+  # (prerelease-style versions don't match carets). Drop the bridge for plain
+  # typescript@^7 once vue-tsc supports it (vuejs/language-tools#5381).
+  typescript: npm:typescript-native-bridge@6.0.3-bridge.18.tsgo.7.0.2
