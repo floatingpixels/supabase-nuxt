@@ -281,7 +281,7 @@ const field = (name: string) => (typeof route.query[name] === 'string' ? route.q
 </template>
 ```
 
-A plain HTML form works without JavaScript. Don't submit it automatically on load: scanners that run JavaScript would spend the token again. `POST /auth/confirm` answers `405` while `confirm` is not set, and `403` to cross-site submissions (browsers send `Sec-Fetch-Site`), so other sites can't sign visitors in to an account of their choosing.
+A plain HTML form works without JavaScript. Don't submit it automatically on load: scanners that run JavaScript would spend the token again. `POST /auth/confirm` answers `405` while `confirm` is not set, and `403` to cross-site submissions (judged by `Sec-Fetch-Site`, or by `Origin` in browsers that don't send it), so other sites can't sign visitors in to an account of their choosing.
 
 ### OAuth Authentication
 

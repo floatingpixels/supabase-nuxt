@@ -197,6 +197,22 @@ describe('/auth/confirm', () => {
       expect(verifyOtp).not.toHaveBeenCalled()
     })
 
+    it('falls back to Origin when Sec-Fetch-Site is missing (older browsers)', async () => {
+      const confirmPost = await handlers.confirmPost()
+      const post = (headers: Record<string, string>) =>
+        run(confirmPost, '/auth/confirm', { method: 'POST', body: 'token_hash=hash&type=email', headers })
+
+      for (const origin of ['http://evil.example.com', 'null', 'http://localhost:3001']) {
+        expect((await post({ origin })).error, origin).toMatchObject({ statusCode: 403 })
+      }
+      expect(verifyOtp).not.toHaveBeenCalled()
+
+      expect(await post({ origin: 'http://localhost:3000' })).toMatchObject({ status: 303 })
+      // No browser headers at all: not a browser, so no login CSRF vector.
+      expect(await post({})).toMatchObject({ status: 303 })
+      expect(verifyOtp).toHaveBeenCalledTimes(2)
+    })
+
     it('validates the posted fields like the GET route', async () => {
       const confirmPost = await handlers.confirmPost()
       const post = (body: string) => run(confirmPost, '/auth/confirm', { method: 'POST', body })

@@ -3,6 +3,15 @@ import { createError, defineEventHandler, getRequestHeader, getRequestHost, read
 import { failAuthFlow, getAuthRedirectOptions, isEmailOtpType, verifyEmailLink } from './flow'
 import { firstQueryValue, getRedirectTarget, setAuthNoStoreHeaders } from './redirect'
 
+// `Origin: null` (sandboxed or privacy-redirected documents) never matches.
+const isSameHostOrigin = (origin: string, host: string) => {
+  try {
+    return new URL(origin).host === host.toLowerCase()
+  } catch {
+    return false
+  }
+}
+
 /**
  * Second step of the two-step email confirmation, enabled by
  * `redirectOptions.confirm`: the confirm page's form posts `token_hash`,
@@ -17,9 +26,15 @@ export default defineEventHandler(async event => {
 
   // Only the app's own confirm page may submit here; a cross-site form could
   // otherwise sign the visitor in to an account of the attacker's choosing.
-  // Browsers send Sec-Fetch-Site on every form submission.
+  // Current browsers send Sec-Fetch-Site on every form submission; older ones
+  // still send Origin on cross-origin POSTs. A request with neither comes
+  // from a non-browser client, which can't be used for login CSRF.
   const fetchSite = getRequestHeader(event, 'sec-fetch-site')
-  if (fetchSite && fetchSite !== 'same-origin') {
+  const origin = getRequestHeader(event, 'origin')
+  const isCrossSite = fetchSite
+    ? fetchSite !== 'same-origin'
+    : origin !== undefined && !isSameHostOrigin(origin, getRequestHost(event))
+  if (isCrossSite) {
     throw createError({ statusCode: 403, statusMessage: 'Cross-site request' })
   }
 
