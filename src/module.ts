@@ -154,7 +154,7 @@ export default defineNuxtModule<ModuleOptions>({
         ...config.optimizeDeps,
         include: [
           ...(config.optimizeDeps?.include || []),
-          '@floatingpixels/supabase-nuxt > @supabase/postgrest-js',
+          '@floatingpixels/supabase-nuxt > @supabase/supabase-js > @supabase/postgrest-js',
           '@floatingpixels/supabase-nuxt > @supabase/ssr > cookie',
           '@floatingpixels/supabase-nuxt > @supabase/supabase-js',
         ],

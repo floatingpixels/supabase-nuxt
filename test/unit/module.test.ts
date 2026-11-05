@@ -161,7 +161,7 @@ describe('module contract', () => {
     extendViteConfig.mock.calls[0]![0](viteConfig)
     expect(viteConfig.optimizeDeps.include).toEqual([
       'existing-dep',
-      '@floatingpixels/supabase-nuxt > @supabase/postgrest-js',
+      '@floatingpixels/supabase-nuxt > @supabase/supabase-js > @supabase/postgrest-js',
       '@floatingpixels/supabase-nuxt > @supabase/ssr > cookie',
       '@floatingpixels/supabase-nuxt > @supabase/supabase-js',
     ])

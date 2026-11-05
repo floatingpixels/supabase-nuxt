@@ -13,6 +13,9 @@ const interopErrorPattern
   = /does not provide an export named ['"](?:parse|serialize)['"]|cookie.*(?:commonjs|esm)|(?:commonjs|esm).*cookie/i
 // h3 v2's parseCookies on Nitro 2's v1 event: the module resolved a hoisted h3 2.x.
 const h3MismatchPattern = /headers\.get is not a function/
+// Vite's warning for an optimizeDeps.include entry it cannot resolve, which
+// Nuxt reports as NUXT_B7002.
+const unresolvedDepPattern = /Failed to resolve dependency|Cannot optimize dependency|NUXT_B7002/
 
 const findPnpmLauncher = async () => {
   if (process.platform === 'win32') {
@@ -93,7 +96,6 @@ const startNuxt = (consumerRoot, port) => {
     'exec',
     'nuxt',
     'dev',
-    '--force',
     '--host',
     '127.0.0.1',
     '--port',
@@ -167,7 +169,7 @@ const createConsumer = async (consumerRoot, tarballPath) => {
       // A direct h3 2.x makes it the top-level, hoisted h3, as Nuxt 4.6's own
       // tooling can. The module must still resolve the h3 1.x Nitro 2 runs on.
       h3: '^2.0.5',
-      nuxt: '4.6.2',
+      nuxt: '4.6.4',
       vue: '^3.5.0',
       'vue-router': '^4.0.0',
     },
@@ -288,6 +290,18 @@ try {
   assert.doesNotMatch(nuxt.getOutput(), h3MismatchPattern, 'the module resolved h3 2.x instead of its own h3 1.x')
 
   console.log('Signed-out SSR request to a protected page redirected to /login with h3 2.x hoisted.')
+
+  // Nuxt reports unresolved entries after a 3 s debounce.
+  const unresolvedDeadline = Date.now() + 5_000
+  while (Date.now() < unresolvedDeadline && !unresolvedDepPattern.test(nuxt.getOutput())) {
+    await delay(250)
+  }
+  assert.doesNotMatch(
+    nuxt.getOutput(),
+    unresolvedDepPattern,
+    'a vite.optimizeDeps.include entry added by the module did not resolve',
+  )
+  console.log('Every optimizeDeps.include entry from the module resolved.')
 } catch (error) {
   const failure = error instanceof Error ? error : new Error(String(error))
   if (nuxt?.getOutput()) {
