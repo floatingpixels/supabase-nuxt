@@ -46,3 +46,29 @@ for (const { path, validQuery } of routes) {
     expect(response.headers()['cache-control']).toContain('no-store')
   })
 }
+
+test('/auth/confirm refuses POST while two-step confirmation is off', async ({ request }) => {
+  const response = await request.post('/auth/confirm', {
+    form: { token_hash: '1234567890', type: 'email' },
+    maxRedirects: 0,
+  })
+
+  expect(response.status()).toBe(405)
+  expect(response.headers()['cache-control']).toContain('no-store')
+})
+
+test('/auth/confirm accepts an absolute redirect_to only on its own host', async ({ request, baseURL }) => {
+  // Supabase's {{ .RedirectTo }} is absolute. GoTrue still rejects the bogus
+  // token, but only after the redirect target passed validation.
+  const sameHost = await request.get(
+    `/auth/confirm?token_hash=1234567890&type=email&redirect_to=${encodeURIComponent(`${baseURL}welcome`)}`,
+    { maxRedirects: 0 },
+  )
+  expect(sameHost.status()).toBe(403)
+
+  const otherHost = await request.get(
+    `/auth/confirm?token_hash=1234567890&type=email&redirect_to=${encodeURIComponent('http://evil.example.com/welcome')}`,
+    { maxRedirects: 0 },
+  )
+  expect(otherHost.status()).toBe(400)
+})

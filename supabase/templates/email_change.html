@@ -1,0 +1,5 @@
+<h2>Confirm your email change</h2>
+<p>From {{ .Email }} to {{ .NewEmail }}</p>
+<p>
+  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&redirect_to={{ .RedirectTo }}">Confirm the change</a>
+</p>

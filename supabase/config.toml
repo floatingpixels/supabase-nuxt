@@ -93,8 +93,13 @@ enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
 site_url = "http://localhost:3000"
-# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://localhost:3000/auth/callback"]
+# URLs that auth providers and email links are permitted to redirect to post authentication.
+# The Playwright tests run the playground on random ports, hence the port wildcards.
+additional_redirect_urls = [
+  "https://localhost:3000/auth/callback",
+  "http://localhost:*/**",
+  "http://127.0.0.1:*/**",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # If disabled, the refresh token will never expire.
@@ -132,14 +137,26 @@ max_frequency = "1s"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Every email links to the module's /auth/confirm route with a token hash (see README).
+[auth.email.template.confirmation]
+subject = "Confirm your signup"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.invite]
+subject = "You have been invited"
+content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.magic_link]
 subject = "Magic Link TEST"
 content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.recovery]
+subject = "Reset your password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your email change"
+content_path = "./supabase/templates/email_change.html"
 
 [auth.sms]
 # Enable/disable the SMS provider (CLI v3 replacement for `enable_signup` here;
@@ -175,6 +192,17 @@ account_sid = ""
 message_service_sid = ""
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+
+# Passkey sign-in. The relying party ID is the bare domain; changing it later
+# invalidates every registered passkey. Loopback origins may use http. Port 3100
+# is the fixed port of the Playwright passkey test.
+[auth.passkey]
+enabled = true
+
+[auth.webauthn]
+rp_display_name = "Supabase Nuxt Playground"
+rp_id = "localhost"
+rp_origins = ["http://localhost:3000", "http://localhost:3100"]
 
 [auth.mfa]
 # Control how many MFA factors can be enrolled at once per user.
