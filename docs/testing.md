@@ -33,7 +33,7 @@ Purpose:
 - verify the module inside a real Nuxt test environment
 - smoke test auth and query behavior through the `playground/` app
 
-These tests use `@nuxt/test-utils` with the Nuxt environment configured in [vitest.config.mts](/Users/stefan/Development/supabase/vitest.config.mts).
+These tests use `@nuxt/test-utils` with the Nuxt environment configured in [vitest.config.mts](../vitest.config.mts).
 
 They do not require `pnpm run dev`.
 
@@ -49,10 +49,15 @@ Purpose:
 - verify redirects
 - verify session persistence across reloads and server requests
 - verify end-to-end data fetching and RLS behavior
+- verify every email flow through `/auth/confirm` (magic link, invite, recovery, email change), reading the emails from the local stack's Mailpit
+- verify the opt-in auth options (two-step confirmation, auth error page), set at runtime through `NUXT_PUBLIC_SUPABASE_REDIRECT_OPTIONS_*` env overrides
+- verify passkey registration, sign-in and management with a virtual WebAuthn authenticator (Chromium only)
 
 These tests use `@nuxt/test-utils/playwright` and run against the `playground/` app. Playwright spins up its own temporary built server for the tests. You do not need `pnpm run dev`.
 
 They do require a reachable local Supabase stack.
+
+The account-flow tests create their own users through the admin API with unique addresses, so they can run in parallel and against a database that already has data. `supabase/config.toml` allows redirects to `http://localhost:*` and `http://127.0.0.1:*`, because the test servers run on random ports. The passkey test runs the playground on the fixed port 3100 and opens it as `http://localhost:3100`, matching the WebAuthn relying party (`rp_id = "localhost"`, `rp_origins`) configured there; keep both in sync.
 
 ### Packed Consumer
 
@@ -61,8 +66,10 @@ Location: `test/consumer`
 Purpose:
 
 - pack the module exactly as a registry consumer receives it
-- install the tarball in an isolated pnpm Nuxt 4.5.2 app with no direct `cookie` dependency
+- install the tarball in an isolated pnpm app on a pinned Nuxt 4 release, with no direct `cookie` dependency and h3 2.x hoisted
 - verify a cold Vite dev start hydrates and initializes `useSupabaseClient()` without CommonJS/ESM errors
+- verify a signed-out SSR request to a protected page redirects to the login page
+- verify every `optimizeDeps.include` entry the module adds resolves (no Vite "Failed to resolve dependency" / Nuxt `NUXT_B7002` warning)
 
 This test uses dummy Supabase configuration and an auth-excluded page, so it does not require a live Supabase stack.
 
@@ -161,8 +168,7 @@ to `main`:
   session cookies of local fixture users.
 
 The Supabase stack's Docker images are cached in the GitHub Actions cache
-(`.github/actions/supabase-image-cache` / `supabase-image-save`, adapted from
-besmyle-portal). Anonymous registry pull limits are shared across the IPs of
+(`.github/actions/supabase-image-cache` / `supabase-image-save`). Anonymous registry pull limits are shared across the IPs of
 GitHub-hosted runners, so uncached pulls fail sporadically; the cache key is
 derived from the supabase CLI version and `supabase/config.toml`, so it
 invalidates exactly when the image set changes.
@@ -171,12 +177,15 @@ invalidates exactly when the image set changes.
 
 The suite currently covers:
 
-- module registration and runtime config wiring
+- module registration and runtime config wiring, and deep merging of consumer options into the defaults
+- `optimizeDeps.include` entries resolving through declared, installed dependencies (`test/unit/optimize-deps.test.ts`)
 - generated `#supabase/server` type exposure
 - `useSupabaseUser()` normalization behavior
 - browser and server Supabase plugin setup
 - auth redirect middleware behavior, pattern escaping, and redirect_to forwarding
 - server helper memoization and the cookie write adapter (chunking, committed responses, write failures)
 - callback and confirm handler behavior, including HTTP-level status, redirect, and cache-header checks
+- the `next` alias, same-host absolute redirect targets, the auth error page, two-step confirmation (GET hand-off, POST verification, cross-site refusal) and PKCE flow ids (`test/unit/auth-routes.test.ts`)
+- email flows for every link type, password and email change, and passkeys, end to end
 - live login, redirect, session persistence, query, service role, and RLS smoke paths
 - packed pnpm consumer hydration and Vite CommonJS dependency interoperability

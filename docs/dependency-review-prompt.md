@@ -72,6 +72,19 @@ source — the installed source wins.
   `setAuthNoStoreHeaders` in `src/runtime/server/auth/redirect.ts` with the
   header set `@supabase/ssr` currently emits — they are intentionally
   identical; flag drift in either direction.
+- **Redirects are returned.** On h3 v2 `sendRedirect` only builds the
+  response, so every auth handler must `return` it (they do as of 0.8.0).
+  When Nuxt 5 / Nitro 3 ships, also re-check: `externals.inline` (renamed
+  `noExternals`), the committed-response guard (`event.node.res`), and
+  whether no-store headers survive thrown errors (h3 v2 keeps only
+  `event.res.errHeaders`).
+- **Passkeys.** auth-js 2.119 ignores `auth.experimental.passkey` (deprecated,
+  on by default). Re-check whether the next major removes the passkey API
+  from `experimental` entirely or changes `auth.passkey.*`.
+- **Secure email change.** As of the CLI 3.0.0 local stack, GoTrue completes an
+  email change on the first of the two confirmation links. The README notes
+  this, and `test/playwright/email-flows.test.ts` pins it; re-verify when
+  GoTrue changes.
 - **`cookie` npm package.** It was removed from dependencies (only
   `@supabase/ssr` uses it internally). Flag any reintroduction.
 

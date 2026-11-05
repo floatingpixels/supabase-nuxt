@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.8.0
+
+### Features
+
+- **Auth error page:** `redirectOptions.authError` sends failed `/auth/confirm` and `/auth/callback` requests (expired or reused links, incomplete links, refused OAuth sign-ins) to a page of your app with `?error=<code>&redirect_to=<page>`, instead of an HTTP error. Off by default.
+- **Two-step email confirmation:** `redirectOptions.confirm` protects one-time email links from mail scanners that open them (e.g. Safe Links). `GET /auth/confirm` then forwards the link to your confirm page, and its button posts back to `/auth/confirm` (new `POST` handler; `405` while the option is off, `403` for cross-site posts). Off by default.
+- `/auth/confirm` and `/auth/callback` accept `next` as an alias for `redirect_to`, as used in Supabase's email template guides.
+- `/auth/callback` passes `sb_flow_id` on to `exchangeCodeForSession` (for `auth.experimental.appendPkceFlowIdToRedirects`).
+- `getRelativeRedirectPath(value, { host })` accepts an absolute URL on the given host and returns its path.
+- The redirect middleware never redirects the `confirm` and `authError` pages.
+
+### Fixes
+
+- **Email templates with `redirect_to={{ .RedirectTo }}` work.** Supabase fills `{{ .RedirectTo }}` with an absolute URL, which `/auth/confirm` and `/auth/callback` rejected with `400`, including in the README's own template example. An absolute target on the host the link was opened on is now accepted and reduced to its path. Every other absolute or protocol-relative target is still rejected.
+- `/auth/confirm` rejects an unknown `type` before calling Supabase.
+- The Vite pre-bundling entry for `@supabase/postgrest-js` resolves through `@supabase/supabase-js`. Before, it resolved only through pnpm's hidden hoisting. Apps need no `optimizeDeps` entries of their own; remove any bare `cookie` entry, which Nuxt reports as `NUXT_B7002`.
+- Auth route handlers return their redirects, ready for h3 v2.
+
+### Documentation
+
+- README: an email template link for every type, failed links, link prefetching, account management (password reset and change, email change), passkeys (no client opt-in needed any more, dashboard and `config.toml` settings, RP ID warning), and Vite pre-bundling.
+
+### Dependencies
+
+- `@supabase/supabase-js` ^2.119.0. Its `auth.experimental.passkey` flag is deprecated and ignored, because passkeys are on by default.
+- Development: Nuxt 4.6.4, pnpm 12, Supabase CLI 3, postgres 4, vitest 5.1.
+
 ## 0.7.2
 
 ### Fixes
