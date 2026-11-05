@@ -5,7 +5,7 @@
   "repository": "floatingpixels/supabase-nuxt",
   "license": "MIT",
   "type": "module",
-  "packageManager": "pnpm@11.4.0",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
     "node": ">=22"
   },

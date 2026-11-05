@@ -32,7 +32,8 @@ const findPnpmLauncher = async () => {
       const firstLine = source.split('\n', 1)[0]
       const isNodeEntrypoint = /\.[cm]?js$/.test(entrypoint) || /^#!.*\bnode\b/.test(firstLine)
 
-      // Nix exposes a JavaScript entrypoint, while pnpm/action-setup exposes a POSIX shim.
+      // pnpm 11 and older ship a JavaScript entrypoint; pnpm 12 (Nix, action-setup) is a native
+      // binary or POSIX shim.
       // Only the JavaScript form can be passed to the current Node process directly.
       return isNodeEntrypoint
         ? { command: process.execPath, prefixArgs: [entrypoint] }
@@ -163,7 +164,7 @@ const createConsumer = async (consumerRoot, tarballPath) => {
     name: 'supabase-nuxt-packed-consumer',
     private: true,
     type: 'module',
-    packageManager: 'pnpm@11.4.0',
+    packageManager: 'pnpm@12.16.1',
     dependencies: {
       '@floatingpixels/supabase-nuxt': `file:${tarballPath}`,
       // A direct h3 2.x makes it the top-level, hoisted h3, as Nuxt 4.6's own

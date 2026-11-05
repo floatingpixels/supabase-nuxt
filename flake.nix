@@ -23,7 +23,7 @@
             nodejs_22
             typescript
             sqlfluff
-            pnpm
+            pnpm_12
             supabase-cli
             ni
             postgresql_17
