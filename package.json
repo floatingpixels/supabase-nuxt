@@ -64,6 +64,7 @@
     "cleanup": "pnpm nuxi cleanup && rm -rf node_modules pnpm-lock.yaml && pnpm i"
   },
   "dependencies": {
+    "@nuxt/kit": "^4.6.4",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
     "defu": "^6.1.7",
@@ -72,7 +73,6 @@
   "devDependencies": {
     "@nuxt/devtools": "4.1.0",
     "@nuxt/eslint-config": "^1.17.0",
-    "@nuxt/kit": "^4.6.4",
     "@nuxt/module-builder": "^1.0.3",
     "@nuxt/schema": "^4.6.4",
     "@nuxt/test-utils": "4.3.4",

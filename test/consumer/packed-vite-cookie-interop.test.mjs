@@ -175,7 +175,9 @@ const createConsumer = async (consumerRoot, tarballPath) => {
       'vue-router': '^4.0.0',
     },
   }, null, 2)}\n`)
-  await writeFile(join(consumerRoot, 'pnpm-workspace.yaml'), 'allowBuilds:\n  esbuild: true\n')
+  // No hoisting at all: every package the module imports at runtime must be
+  // one of its declared dependencies, not something pnpm happened to hoist.
+  await writeFile(join(consumerRoot, 'pnpm-workspace.yaml'), 'allowBuilds:\n  esbuild: true\nhoist: false\n')
   await writeFile(join(consumerRoot, 'nuxt.config.ts'), `export default defineNuxtConfig({
   modules: ['@floatingpixels/supabase-nuxt'],
   devtools: { enabled: false },
