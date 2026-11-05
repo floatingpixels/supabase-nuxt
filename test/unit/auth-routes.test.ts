@@ -16,8 +16,9 @@ vi.mock('#supabase/server', () => ({
   supabaseServerClient: vi.fn(async () => ({ auth: { verifyOtp, exchangeCodeForSession } })),
 }))
 
-const withRedirectOptions = (redirectOptions: Record<string, unknown>) => {
+const withRedirectOptions = (redirectOptions: Record<string, unknown>, baseURL = '/') => {
   useRuntimeConfig.mockReturnValue({
+    app: { baseURL },
     public: { supabase: { redirectOptions: { login: '/login', exclude: [], confirm: '', authError: '', ...redirectOptions } } },
   })
 }
@@ -224,6 +225,20 @@ describe('/auth/confirm', () => {
       expect(result).toMatchObject({ status: 303, location: '/account/password' })
       expect(result.res.getHeader('cache-control')).toContain('no-store')
       expect(setCookieHeader(result.res)).toMatch(/supabase-nuxt-confirm=;.*Max-Age=0.*Path=\/auth\/confirm/)
+    })
+
+    it('keeps the cookie and the page redirects under app.baseURL', async () => {
+      withRedirectOptions({ confirm: '/auth/confirm-link', authError: '/auth/error' }, '/app/')
+
+      const get = await run(await handlers.confirm(), '/app/auth/confirm?token_hash=hash&type=email&redirect_to=/app/welcome')
+      expect(get).toMatchObject({ status: 302, location: '/app/auth/confirm-link' })
+      expect(setCookieHeader(get.res)).toContain('Path=/app/auth/confirm')
+
+      const confirmed = await post(setCookieHeader(get.res).split(';')[0])
+      expect(confirmed).toMatchObject({ status: 303, location: '/app/welcome' })
+      expect(setCookieHeader(confirmed.res)).toContain('Path=/app/auth/confirm')
+
+      expect(await post(undefined)).toMatchObject({ status: 303, location: '/app/auth/error?error=otp_expired' })
     })
 
     it('treats a POST without a parked link as an expired link', async () => {

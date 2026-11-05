@@ -12,13 +12,17 @@ const signInWithOAuth = async () => {
   if (error) console.log(error)
 }
 
-// Email links come back to this app's origin; /auth/confirm accepts absolute
-// redirect targets only on the host the link was opened on.
+// Email links come back to this app's origin (under app.baseURL);
+// /auth/confirm accepts absolute redirect targets only on the host the link
+// was opened on.
+const { baseURL } = useRuntimeConfig().app
+const appUrl = (path: string) => `${window.location.origin}${baseURL}${path}`
+
 const signIn = async () => {
   const { error } = await supabase.auth.signInWithOtp({
     email: email.value,
     options: {
-      emailRedirectTo: `${window.location.origin}/welcome`,
+      emailRedirectTo: appUrl('welcome'),
     },
   })
   status.value = error ? error.message : 'Check your email for the sign-in link'
@@ -26,7 +30,7 @@ const signIn = async () => {
 
 const sendPasswordReset = async () => {
   const { error } = await supabase.auth.resetPasswordForEmail(email.value, {
-    redirectTo: `${window.location.origin}/account`,
+    redirectTo: appUrl('account'),
   })
   status.value = error ? error.message : 'Check your email for the password reset link'
 }

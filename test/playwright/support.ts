@@ -46,11 +46,11 @@ export const emailLink = async (to: string, { timeout = 15_000 } = {}) => {
 }
 
 /** The user the server sees for the browser's session cookies. */
-export const serverSessionEmail = async (page: Page) =>
-  page.evaluate(async () => {
-    const { user } = await fetch('/api/session').then(response => response.json()) as { user: { email: string } | null }
+export const serverSessionEmail = async (page: Page, baseURL = '/') =>
+  page.evaluate(async (base) => {
+    const { user } = await fetch(`${base}api/session`).then(response => response.json()) as { user: { email: string } | null }
     return user?.email ?? null
-  })
+  }, baseURL)
 
 export const signInWithPassword = async (page: Page, email: string, password: string) => {
   await page.locator('input[type="email"]').fill(email)

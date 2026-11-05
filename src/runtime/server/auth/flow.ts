@@ -31,6 +31,15 @@ const configuredPage = (name: string, value: string | undefined) => {
   return value
 }
 
+/**
+ * `path` (an app route such as `/auth/error`) as a URL path: Nitro serves the
+ * module's routes and the app's pages under `app.baseURL` (`/` by default).
+ */
+export const withAppBase = (event: H3Event, path: string) => {
+  const baseURL = useRuntimeConfig(event).app?.baseURL ?? '/'
+  return `${baseURL.replace(/\/+$/, '')}${path}`
+}
+
 export const getAuthRedirectOptions = (event: H3Event) => {
   const { confirm, authError } = useRuntimeConfig(event).public.supabase.redirectOptions ?? {}
   return {
@@ -68,7 +77,7 @@ export const failAuthFlow = async (event: H3Event, { code, error, redirectTo }: 
   // the response.
   return sendRedirect(
     event,
-    withQuery(authError, { error: code, redirect_to: redirectTo }),
+    withQuery(withAppBase(event, authError), { error: code, redirect_to: redirectTo }),
     redirectStatus(event),
   )
 }
@@ -108,14 +117,14 @@ export const parseEmailLink = (
 // Two-step confirmation keeps the unspent token out of the confirm page's
 // URL, where analytics, error trackers and browser history would record a
 // working sign-in link: GET /auth/confirm parks the link in this cookie, and
-// the page's POST back to /auth/confirm spends it. The path keeps it away from
-// every other request (the confirm page included), and SameSite=Lax keeps it
-// off cross-site POSTs.
+// the page's POST back to /auth/confirm spends it. The path (under
+// app.baseURL) keeps it away from every other request, the confirm page
+// included, and SameSite=Lax keeps it off cross-site POSTs.
 const CONFIRM_COOKIE = 'supabase-nuxt-confirm'
 const CONFIRM_COOKIE_MAX_AGE = 10 * 60
 
 const confirmCookieOptions = (event: H3Event) => ({
-  path: '/auth/confirm',
+  path: withAppBase(event, '/auth/confirm'),
   httpOnly: true,
   sameSite: 'lax' as const,
   secure: getRequestProtocol(event) === 'https',

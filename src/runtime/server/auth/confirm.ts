@@ -1,5 +1,5 @@
 import { getQuery, sendRedirect, defineEventHandler } from 'h3'
-import { getAuthRedirectOptions, parkEmailLink, parseEmailLink, verifyEmailLink } from './flow'
+import { getAuthRedirectOptions, parkEmailLink, parseEmailLink, verifyEmailLink, withAppBase } from './flow'
 import { setAuthNoStoreHeaders } from './redirect'
 
 export default defineEventHandler(async event => {
@@ -16,7 +16,7 @@ export default defineEventHandler(async event => {
   const { confirm } = getAuthRedirectOptions(event)
   if (confirm) {
     parkEmailLink(event, link)
-    return sendRedirect(event, confirm, 302)
+    return sendRedirect(event, withAppBase(event, confirm), 302)
   }
 
   return verifyEmailLink(event, link)

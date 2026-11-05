@@ -5,6 +5,7 @@ import type { PasskeyListItem } from '@supabase/supabase-js'
 // passkeys. The email shown is rendered server-side, so it reflects the
 // session cookies the server sees.
 const supabase = useSupabaseClient()
+const { baseURL } = useRuntimeConfig().app
 const { data: user } = await useSupabaseUser()
 
 const status = ref('')
@@ -29,7 +30,7 @@ const updateEmail = async () => {
   // With secure email change, both addresses get a link to /auth/confirm.
   const { error } = await supabase.auth.updateUser(
     { email: newEmail.value },
-    { emailRedirectTo: `${window.location.origin}/account` },
+    { emailRedirectTo: `${window.location.origin}${baseURL}account` },
   )
   report(error, 'Check both inboxes to confirm the change')
 }
@@ -59,8 +60,11 @@ const deletePasskey = async (passkeyId: string) => {
 }
 onMounted(loadPasskeys)
 
+// Since supabase-js 2.119 a failed global sign-out keeps the session, so only
+// leave the page once it actually ended.
 const signOut = async () => {
-  await supabase.auth.signOut()
+  const { error } = await supabase.auth.signOut()
+  if (error) return report(error, '')
   await navigateTo('/sign-in')
 }
 </script>
