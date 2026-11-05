@@ -19,4 +19,4 @@ overrides:
   # devDependency alias on purpose: keep both in sync and pinned exactly
   # (prerelease-style versions don't match carets). Drop the bridge for plain
   # typescript@^7 once vue-tsc supports it (vuejs/language-tools#5381).
-  typescript: npm:typescript-native-bridge@6.0.3-bridge.18.tsgo.7.0.2
+  typescript: npm:typescript-native-bridge@6.0.3-bridge.19.tsgo.7.0.2
