@@ -20,7 +20,7 @@ export default defineNuxtPlugin({
         // Do not redirect on the login, email confirm and auth error pages,
         // which serve signed-out users, nor on excluded routes. Only `*` is a
         // wildcard; every other character matches literally.
-        const authPages = [confirm, authError].filter(Boolean).map(page => page!.split('?')[0]!)
+        const authPages = [confirm, authError].filter(Boolean).map(page => page!.split(/[?#]/)[0]!)
         const publicPaths = [...(exclude || []), login || '/login', ...authPages]
         const isExcluded = publicPaths.some(path => {
           const pattern = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*')

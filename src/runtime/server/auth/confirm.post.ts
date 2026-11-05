@@ -1,21 +1,11 @@
-import type { H3Error } from 'h3'
-import { createError, defineEventHandler, getRequestHeader, getRequestHost, readBody } from 'h3'
-import { failAuthFlow, getAuthRedirectOptions, isEmailOtpType, verifyEmailLink } from './flow'
-import { firstQueryValue, getRedirectTarget, setAuthNoStoreHeaders } from './redirect'
-
-// `Origin: null` (sandboxed or privacy-redirected documents) never matches.
-const isSameHostOrigin = (origin: string, host: string) => {
-  try {
-    return new URL(origin).host === host.toLowerCase()
-  } catch {
-    return false
-  }
-}
+import { createError, defineEventHandler, getRequestHeader } from 'h3'
+import { failAuthFlow, getAuthRedirectOptions, parseEmailLink, requestHosts, takeParkedEmailLink, verifyEmailLink } from './flow'
+import { isOnHost, setAuthNoStoreHeaders } from './redirect'
 
 /**
  * Second step of the two-step email confirmation, enabled by
- * `redirectOptions.confirm`: the confirm page's form posts `token_hash`,
- * `type` and `redirect_to` (or `next`) here.
+ * `redirectOptions.confirm`: the confirm page's form posts here (no fields),
+ * and the email link parked in a cookie by `GET /auth/confirm` is verified.
  */
 export default defineEventHandler(async event => {
   setAuthNoStoreHeaders(event)
@@ -33,30 +23,24 @@ export default defineEventHandler(async event => {
   const origin = getRequestHeader(event, 'origin')
   const isCrossSite = fetchSite
     ? fetchSite !== 'same-origin'
-    : origin !== undefined && !isSameHostOrigin(origin, getRequestHost(event))
+    // `Origin: null` (sandboxed or privacy-redirected documents) never matches.
+    : origin !== undefined && !isOnHost(origin, requestHosts(event))
   if (isCrossSite) {
     throw createError({ statusCode: 403, statusMessage: 'Cross-site request' })
   }
 
-  const body = await readBody<Record<string, unknown> | undefined>(event)
-  const params = body && typeof body === 'object' ? body : {}
-
-  let redirectTo: string
-  try {
-    redirectTo = getRedirectTarget(params, getRequestHost(event))
-  } catch (error) {
-    return failAuthFlow(event, { code: 'invalid_redirect', error: error as H3Error })
-  }
-
-  const token_hash = firstQueryValue(params.token_hash)
-  const type = firstQueryValue(params.type)
-  if (typeof token_hash !== 'string' || !token_hash || !isEmailOtpType(type)) {
+  const params = takeParkedEmailLink(event)
+  if (!params) {
+    // Older than the cookie's 10 minutes, already submitted, or opened in
+    // another browser: the user needs a new link, as for a spent token.
     return failAuthFlow(event, {
-      code: 'invalid_request',
-      error: { statusCode: 400, message: 'Invalid token' },
-      redirectTo,
+      code: 'otp_expired',
+      error: { statusCode: 400, message: 'Email link expired or already used' },
     })
   }
 
-  return verifyEmailLink(event, { token_hash, type, redirectTo })
+  const parsed = parseEmailLink(event, params)
+  if ('failure' in parsed) return parsed.failure
+
+  return verifyEmailLink(event, parsed.link)
 })

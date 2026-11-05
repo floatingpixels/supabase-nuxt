@@ -102,7 +102,7 @@ Default:
 
 - `login`: User will be redirected to this route if not authenticated or after logout.
 - `exclude`: Routes to exclude from the re-direct. `['/foo', '/bar/*']` will exclude the `foo` page and all pages in your `bar` folder.
-- `confirm`: Page for [two-step email confirmation](#email-link-prefetching-two-step-confirmation). When set, `GET /auth/confirm` no longer verifies email links itself; it forwards them to this page, whose button posts them back. Empty by default: links are verified on `GET`.
+- `confirm`: Page for [two-step email confirmation](#email-link-prefetching-two-step-confirmation). When set, `GET /auth/confirm` no longer verifies email links itself: it keeps the link in a short-lived cookie and opens this page, whose button posts back to confirm it. Empty by default: links are verified on `GET`.
 - `authError`: Page that failed `/auth/confirm` and `/auth/callback` requests [redirect to](#failed-links), with a short code in the `error` query parameter. Empty by default: failures answer with an HTTP error.
 
 `confirm` and `authError` work independently of `redirect`. When `redirect` is on, both pages (like the login page) are excluded from it automatically, because they serve signed-out users. Both can also be set at runtime with `NUXT_PUBLIC_SUPABASE_REDIRECT_OPTIONS_CONFIRM` and `NUXT_PUBLIC_SUPABASE_REDIRECT_OPTIONS_AUTH_ERROR`.
@@ -189,7 +189,7 @@ For example:
 
 **Where the link leads.** `redirect_to` names the page users land on after the link is verified; without it they land on `/`. Supabase's own guides call this parameter `next`, which the module accepts as an alias (`redirect_to` wins when both are present). The target must stay on your site:
 
-- `{{ .RedirectTo }}` is the absolute URL your app passed as `emailRedirectTo` (or `redirectTo`), if it is on the project's redirect allow list, otherwise the Site URL. An absolute URL is accepted only if it points at the host the link was opened on, and the user is then redirected to its path.
+- `{{ .RedirectTo }}` is the absolute URL your app passed as `emailRedirectTo` (or `redirectTo`), if it is on the project's redirect allow list, otherwise the Site URL. An absolute URL is accepted only if it points at the host the link was opened on (the `Host` header, or `X-Forwarded-Host` behind a proxy), and the user is then redirected to its path. If your proxy passes neither the public host nor `X-Forwarded-Host`, or the Site URL's host differs from the one users open (`example.com` vs `www.example.com`), use relative paths in the templates instead.
 - A relative path such as `next=/account/password` works as well, for templates with a fixed destination.
 - Anything else (other hosts, protocol-relative `//host`, backslashes, control characters) answers `400`, or goes to the [error page](#failed-links).
 
@@ -243,8 +243,8 @@ export default defineNuxtConfig({
 
 Failures then redirect to `/login?error=<code>&redirect_to=<page>`:
 
-- `error` is Supabase's error code when there is one (`otp_expired` for an expired or already used link, `flow_state_not_found`, ...), `invalid_request` for a link without `token_hash` or a valid `type`, `invalid_redirect` for a target outside the site, `auth_error` otherwise. On `/auth/callback` it is the OAuth provider's `error_code`/`error` (e.g. `access_denied`) when the provider refused.
-- `redirect_to` is the link's destination when it was valid, so the page can offer to send a new link and continue there afterwards. Validate it like any other redirect target before you use it.
+- `error` is Supabase's error code when there is one (`otp_expired` for an expired or already used link, also when the two-step confirm button has no link to confirm, `flow_state_not_found`, ...), `invalid_request` for a link without `token_hash` or a valid `type`, `invalid_redirect` for a target outside the site, `auth_error` otherwise. On `/auth/callback` it is the OAuth provider's `error_code`/`error` (e.g. `access_denied`) when the provider refused.
+- `redirect_to` is the link's validated destination (`/` when the link named none; left out when the destination itself was invalid), so the page can offer to send a new link and continue there afterwards. Validate it like any other redirect target before you use it.
 
 #### Email link prefetching (two-step confirmation)
 
@@ -263,25 +263,20 @@ export default defineNuxtConfig({
 })
 ```
 
-Email templates keep pointing at `/auth/confirm`. A `GET` there now only forwards the link to your confirm page (with `token_hash`, `type` and `redirect_to` in the query) without spending the token. The page shows a button that posts the fields back to `/auth/confirm`, which verifies the token, sets the session cookies and redirects with `303`:
+Email templates keep pointing at `/auth/confirm`. A `GET` there now validates the link and keeps it, unspent, in a short-lived cookie (10 minutes, `HttpOnly`, `SameSite=Lax`, sent only to `/auth/confirm`). It then redirects to your confirm page. The page shows a button that posts back to `/auth/confirm`, which takes the link from the cookie (clearing it), verifies the token, sets the session cookies and redirects with `303`:
 
 ```vue [pages/auth/confirm-link.vue]
-<script setup lang="ts">
-const route = useRoute()
-const field = (name: string) => (typeof route.query[name] === 'string' ? route.query[name] : '')
-</script>
-
 <template>
   <form method="post" action="/auth/confirm">
-    <input type="hidden" name="token_hash" :value="field('token_hash')">
-    <input type="hidden" name="type" :value="field('type')">
-    <input type="hidden" name="redirect_to" :value="field('redirect_to')">
     <button type="submit">Continue</button>
   </form>
 </template>
 ```
 
-A plain HTML form works without JavaScript. Don't submit it automatically on load: scanners that run JavaScript would spend the token again. `POST /auth/confirm` answers `405` while `confirm` is not set, and `403` to cross-site submissions (judged by `Sec-Fetch-Site`, or by `Origin` in browsers that don't send it), so other sites can't sign visitors in to an account of their choosing.
+- **The token never appears in the confirm page's URL.** So analytics, error trackers and the browser history on that page can't record a working sign-in link. The page receives no query parameters at all.
+- **A plain HTML form works without JavaScript.** Don't submit it automatically on load: scanners that run JavaScript would spend the token again.
+- **One link at a time.** The confirm step works in the browser that opened the link, within 10 minutes, once. Otherwise the button ends like an expired link (`otp_expired`). If several email links are opened before any is confirmed, the last one opened is confirmed.
+- **Protected against other sites.** `POST /auth/confirm` answers `405` while `confirm` is not set, and `403` to cross-site submissions (judged by `Sec-Fetch-Site`, or by `Origin` in browsers that don't send it). Because of `SameSite=Lax`, the browser doesn't send the cookie with a cross-site post anyway.
 
 ### OAuth Authentication
 
@@ -343,9 +338,10 @@ await supabase.auth.resetPasswordForEmail(email, {
   redirectTo: `${window.location.origin}/account/password`,
 })
 
-// New password for the signed-in user. `currentPassword` (supabase-js 2.102+) makes
-// Supabase check the old password first; leave it out after an invite or recovery link.
-await supabase.auth.updateUser({ password: newPassword, currentPassword })
+// New password for the signed-in user. With "require current password" enabled for
+// the project, Supabase checks `current_password` first (otherwise it is ignored);
+// leave it out after an invite or recovery link.
+await supabase.auth.updateUser({ password: newPassword, current_password: currentPassword })
 
 // New email address. With "Secure email change" enabled, both the old and the new
 // address receive a link (template "Change email address").

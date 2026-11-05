@@ -38,10 +38,11 @@ export interface RedirectOptions {
   exclude?: string[]
   /**
    * Page for two-step email confirmation. When set, `GET /auth/confirm` does
-   * not verify the link; it redirects to this page with `token_hash`, `type`
-   * and `redirect_to` in the query, and the page's form POSTs them back to
-   * `/auth/confirm`. Protects one-time links from mail scanners that open
-   * them. The page is excluded from the auth redirect.
+   * not verify the link: it keeps it in a short-lived cookie scoped to
+   * `/auth/confirm` and redirects to this page, whose form POSTs to
+   * `/auth/confirm` to verify it. Protects one-time links from mail scanners
+   * that open them, without putting the token in the page's URL. The page is
+   * excluded from the auth redirect. A path, without `#fragment`.
    * @default '' (GET verifies directly)
    * @type string
    */
@@ -49,8 +50,8 @@ export interface RedirectOptions {
   /**
    * Page that failed `/auth/confirm` and `/auth/callback` requests redirect
    * to, with a short code in the `error` query parameter (e.g. `otp_expired`)
-   * and `redirect_to` when the link carried a valid one. The page is excluded
-   * from the auth redirect.
+   * and the link's validated `redirect_to` (`/` when it named none). The page
+   * is excluded from the auth redirect. A path, without `#fragment`.
    * @default '' (failures answer with an HTTP error)
    * @type string
    */

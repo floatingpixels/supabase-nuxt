@@ -122,6 +122,23 @@ describe('/auth/confirm', () => {
     expect(verifyOtp).toHaveBeenCalledTimes(2)
   })
 
+  it('also recognises the public host from X-Forwarded-Host behind a proxy', async () => {
+    const confirm = await handlers.confirm()
+    const link = `/auth/confirm?token_hash=hash&type=email&redirect_to=${encodeURIComponent('https://app.example.com/welcome')}`
+
+    expect(await run(confirm, link, { headers: { 'x-forwarded-host': 'app.example.com' } })).toMatchObject({ status: 302, location: '/welcome' })
+    expect((await run(confirm, link)).error).toMatchObject({ statusCode: 400 })
+  })
+
+  it('names a misconfigured confirm or authError page instead of failing every link obscurely', async () => {
+    for (const [name, value] of [['authError', 'https://example.com/auth/error'], ['authError', '/auth/error#details'], ['confirm', 'auth/confirm-link'], ['confirm', '//evil.example.com']]) {
+      withRedirectOptions({ [name!]: value })
+      const result = await run(await handlers.confirm(), '/auth/confirm?type=email')
+      expect(result.error, `${name}=${value}`).toMatchObject({ statusCode: 500 })
+      expect((result.error as unknown as { statusMessage: string }).statusMessage).toContain(`redirectOptions.${name}`)
+    }
+  })
+
   describe('with redirectOptions.authError', () => {
     beforeEach(() => withRedirectOptions({ authError: '/login' }))
 
@@ -163,62 +180,89 @@ describe('/auth/confirm', () => {
   describe('with redirectOptions.confirm (two-step)', () => {
     beforeEach(() => withRedirectOptions({ confirm: '/auth/confirm-link' }))
 
-    it('hands a GET over to the confirm page without consuming the token', async () => {
+    // The cookie GET /auth/confirm parks a link in, as the browser sends it back.
+    const parked = (fields: Record<string, string>) =>
+      `supabase-nuxt-confirm=${encodeURIComponent(new URLSearchParams(fields).toString())}`
+    const setCookieHeader = (res: ServerResponse) => [res.getHeader('set-cookie') ?? []].flat().join('\n')
+    const post = async (cookie: string | undefined, headers: Record<string, string> = {}) =>
+      run(await handlers.confirmPost(), '/auth/confirm', {
+        method: 'POST',
+        headers: { ...(cookie ? { cookie } : {}), ...headers },
+      })
+
+    it('parks a GET in a cookie and opens the confirm page without the token in its URL', async () => {
       const result = await run(await handlers.confirm(), '/auth/confirm?token_hash=hash&type=recovery&next=/account/password')
 
       expect(verifyOtp).not.toHaveBeenCalled()
-      expect(result).toMatchObject({
-        status: 302,
-        location: '/auth/confirm-link?token_hash=hash&type=recovery&redirect_to=%2Faccount%2Fpassword',
-      })
+      expect(result).toMatchObject({ status: 302, location: '/auth/confirm-link' })
+      const cookie = setCookieHeader(result.res)
+      expect(cookie).toContain(parked({ token_hash: 'hash', type: 'recovery', redirect_to: '/account/password' }))
+      expect(cookie).toContain('Max-Age=600')
+      expect(cookie).toContain('Path=/auth/confirm')
+      expect(cookie).toContain('HttpOnly')
+      expect(cookie).toContain('SameSite=Lax')
+      expect(cookie).not.toContain('Secure')
+
+      const https = await run(await handlers.confirm(), '/auth/confirm?token_hash=hash&type=email', { headers: { 'x-forwarded-proto': 'https' } })
+      expect(setCookieHeader(https.res)).toContain('Secure')
     })
 
-    it('verifies the POST from the confirm page and answers 303', async () => {
-      const result = await run(await handlers.confirmPost(), '/auth/confirm', {
-        method: 'POST',
-        body: 'token_hash=hash&type=recovery&redirect_to=%2Faccount%2Fpassword',
-        headers: { 'sec-fetch-site': 'same-origin' },
-      })
+    it('validates the link before parking it', async () => {
+      const result = await run(await handlers.confirm(), '/auth/confirm?type=email')
+
+      expect(result.error).toMatchObject({ statusCode: 400, message: 'Invalid token' })
+      expect(setCookieHeader(result.res)).toBe('')
+    })
+
+    it('verifies the parked link on POST, clears the cookie and answers 303', async () => {
+      const get = await run(await handlers.confirm(), '/auth/confirm?token_hash=hash&type=recovery&redirect_to=/account/password')
+      const cookie = setCookieHeader(get.res).split(';')[0]
+
+      const result = await post(cookie, { 'sec-fetch-site': 'same-origin' })
 
       expect(verifyOtp).toHaveBeenCalledWith({ type: 'recovery', token_hash: 'hash' })
       expect(result).toMatchObject({ status: 303, location: '/account/password' })
       expect(result.res.getHeader('cache-control')).toContain('no-store')
+      expect(setCookieHeader(result.res)).toMatch(/supabase-nuxt-confirm=;.*Max-Age=0.*Path=\/auth\/confirm/)
     })
 
-    it('rejects cross-site POSTs before verifying', async () => {
+    it('treats a POST without a parked link as an expired link', async () => {
+      const result = await post(undefined, { 'sec-fetch-site': 'same-origin' })
+      expect(result.error).toMatchObject({ statusCode: 400, message: 'Email link expired or already used' })
+
+      withRedirectOptions({ confirm: '/auth/confirm-link', authError: '/login' })
+      expect(await post(undefined)).toMatchObject({ status: 303, location: '/login?error=otp_expired' })
+      expect(verifyOtp).not.toHaveBeenCalled()
+    })
+
+    it('rejects cross-site POSTs before touching the parked link', async () => {
       for (const site of ['cross-site', 'same-site']) {
-        const result = await run(await handlers.confirmPost(), '/auth/confirm', {
-          method: 'POST',
-          body: 'token_hash=hash&type=email',
-          headers: { 'sec-fetch-site': site },
-        })
+        const result = await post(parked({ token_hash: 'hash', type: 'email' }), { 'sec-fetch-site': site })
         expect(result.error, site).toMatchObject({ statusCode: 403 })
+        expect(setCookieHeader(result.res)).toBe('')
       }
       expect(verifyOtp).not.toHaveBeenCalled()
     })
 
     it('falls back to Origin when Sec-Fetch-Site is missing (older browsers)', async () => {
-      const confirmPost = await handlers.confirmPost()
-      const post = (headers: Record<string, string>) =>
-        run(confirmPost, '/auth/confirm', { method: 'POST', body: 'token_hash=hash&type=email', headers })
+      const cookie = parked({ token_hash: 'hash', type: 'email' })
 
       for (const origin of ['http://evil.example.com', 'null', 'http://localhost:3001']) {
-        expect((await post({ origin })).error, origin).toMatchObject({ statusCode: 403 })
+        expect((await post(cookie, { origin })).error, origin).toMatchObject({ statusCode: 403 })
       }
       expect(verifyOtp).not.toHaveBeenCalled()
 
-      expect(await post({ origin: 'http://localhost:3000' })).toMatchObject({ status: 303 })
+      expect(await post(cookie, { origin: 'http://localhost:3000' })).toMatchObject({ status: 303 })
+      // Behind a proxy that rewrites Host, the public host arrives as X-Forwarded-Host.
+      expect(await post(cookie, { 'origin': 'https://app.example.com', 'x-forwarded-host': 'app.example.com' })).toMatchObject({ status: 303 })
       // No browser headers at all: not a browser, so no login CSRF vector.
-      expect(await post({})).toMatchObject({ status: 303 })
-      expect(verifyOtp).toHaveBeenCalledTimes(2)
+      expect(await post(cookie)).toMatchObject({ status: 303 })
+      expect(verifyOtp).toHaveBeenCalledTimes(3)
     })
 
-    it('validates the posted fields like the GET route', async () => {
-      const confirmPost = await handlers.confirmPost()
-      const post = (body: string) => run(confirmPost, '/auth/confirm', { method: 'POST', body })
-
-      expect((await post('type=email')).error).toMatchObject({ statusCode: 400, message: 'Invalid token' })
-      expect((await post('token_hash=hash&type=email&redirect_to=%2F%2Fevil.example.com')).error).toMatchObject({ statusCode: 400 })
+    it('validates a tampered cookie like a link', async () => {
+      expect((await post(parked({ type: 'email' }))).error).toMatchObject({ statusCode: 400, message: 'Invalid token' })
+      expect((await post(parked({ token_hash: 'hash', type: 'email', redirect_to: '//evil.example.com' }))).error).toMatchObject({ statusCode: 400 })
       expect(verifyOtp).not.toHaveBeenCalled()
     })
 
@@ -226,14 +270,14 @@ describe('/auth/confirm', () => {
       withRedirectOptions({ confirm: '/auth/confirm-link', authError: '/login' })
       verifyOtp.mockResolvedValueOnce({ error: { message: 'expired', status: 403, code: 'otp_expired' } })
 
-      const result = await run(await handlers.confirmPost(), '/auth/confirm', { method: 'POST', body: 'token_hash=hash&type=invite' })
+      const result = await post(parked({ token_hash: 'hash', type: 'invite', redirect_to: '/account' }))
 
-      expect(result).toMatchObject({ status: 303, location: '/login?error=otp_expired&redirect_to=%2F' })
+      expect(result).toMatchObject({ status: 303, location: '/login?error=otp_expired&redirect_to=%2Faccount' })
     })
   })
 
   it('answers POST with 405 while two-step confirmation is off', async () => {
-    const result = await run(await handlers.confirmPost(), '/auth/confirm', { method: 'POST', body: 'token_hash=hash&type=email' })
+    const result = await run(await handlers.confirmPost(), '/auth/confirm', { method: 'POST' })
 
     expect(result.error).toMatchObject({ statusCode: 405 })
     expect(verifyOtp).not.toHaveBeenCalled()

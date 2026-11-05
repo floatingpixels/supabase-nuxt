@@ -1,7 +1,7 @@
 import type { H3Error } from 'h3'
-import { defineEventHandler, getQuery, getRequestHost } from 'h3'
+import { defineEventHandler, getQuery } from 'h3'
 import { supabaseServerClient } from '#supabase/server'
-import { failAuthFlow, redirectAfterAuth } from './flow'
+import { failAuthFlow, redirectAfterAuth, requestHosts } from './flow'
 import { authErrorCode, firstQueryValue, getRedirectTarget, setAuthNoStoreHeaders } from './redirect'
 
 export default defineEventHandler(async event => {
@@ -10,7 +10,7 @@ export default defineEventHandler(async event => {
   const query = getQuery(event)
   let redirectTo: string
   try {
-    redirectTo = getRedirectTarget(query, getRequestHost(event))
+    redirectTo = getRedirectTarget(query, requestHosts(event))
   } catch (error) {
     return failAuthFlow(event, { code: 'invalid_redirect', error: error as H3Error })
   }

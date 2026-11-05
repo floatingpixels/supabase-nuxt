@@ -5,7 +5,7 @@
 ### Features
 
 - **Auth error page:** `redirectOptions.authError` sends failed `/auth/confirm` and `/auth/callback` requests (expired or reused links, incomplete links, refused OAuth sign-ins) to a page of your app with `?error=<code>&redirect_to=<page>`, instead of an HTTP error. Off by default.
-- **Two-step email confirmation:** `redirectOptions.confirm` protects one-time email links from mail scanners that open them (e.g. Safe Links). `GET /auth/confirm` then forwards the link to your confirm page, and its button posts back to `/auth/confirm` (new `POST` handler; `405` while the option is off, `403` for cross-site posts, judged by `Sec-Fetch-Site` or, in older browsers, `Origin`). Off by default.
+- **Two-step email confirmation:** `redirectOptions.confirm` protects one-time email links from mail scanners that open them (e.g. Safe Links). `GET /auth/confirm` then keeps the link unspent in a short-lived, `HttpOnly`, `SameSite=Lax` cookie scoped to `/auth/confirm`, and opens your confirm page. The token never appears in that page's URL, where analytics or error trackers could record it. The page's button posts back to `/auth/confirm` (new `POST` handler: `405` while the option is off; `403` for cross-site posts, judged by `Sec-Fetch-Site` or, in older browsers, `Origin`). Off by default.
 - `/auth/confirm` and `/auth/callback` accept `next` as an alias for `redirect_to`, as used in Supabase's email template guides.
 - `/auth/callback` passes `sb_flow_id` on to `exchangeCodeForSession` (for `auth.experimental.appendPkceFlowIdToRedirects`).
 - `getRelativeRedirectPath(value, { host })` accepts an absolute URL on the given host and returns its path.

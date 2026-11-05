@@ -17,7 +17,9 @@ const currentPassword = ref('')
 const updatePassword = async () => {
   const { error } = await supabase.auth.updateUser({
     password: newPassword.value,
-    ...(currentPassword.value ? { currentPassword: currentPassword.value } : {}),
+    // Checked by Supabase before the change; not needed after an invite or
+    // recovery link.
+    current_password: currentPassword.value || undefined,
   })
   report(error, 'Password updated')
 }

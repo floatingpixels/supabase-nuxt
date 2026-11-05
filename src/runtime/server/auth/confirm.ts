@@ -1,40 +1,23 @@
-import type { H3Error } from 'h3'
-import { getQuery, getRequestHost, sendRedirect, defineEventHandler } from 'h3'
-import { failAuthFlow, getAuthRedirectOptions, isEmailOtpType, verifyEmailLink } from './flow'
-import { firstQueryValue, getRedirectTarget, getRelativeRedirectPath, setAuthNoStoreHeaders, withQuery } from './redirect'
+import { getQuery, sendRedirect, defineEventHandler } from 'h3'
+import { getAuthRedirectOptions, parkEmailLink, parseEmailLink, verifyEmailLink } from './flow'
+import { setAuthNoStoreHeaders } from './redirect'
 
 export default defineEventHandler(async event => {
   setAuthNoStoreHeaders(event)
 
-  const query = getQuery(event)
-  let redirectTo: string
-  try {
-    redirectTo = getRedirectTarget(query, getRequestHost(event))
-  } catch (error) {
-    return failAuthFlow(event, { code: 'invalid_redirect', error: error as H3Error })
-  }
+  const parsed = parseEmailLink(event, getQuery(event))
+  if ('failure' in parsed) return parsed.failure
+  const { link } = parsed
 
-  const token_hash = firstQueryValue(query.token_hash)
-  const type = firstQueryValue(query.type)
-  if (typeof token_hash !== 'string' || !token_hash || !isEmailOtpType(type)) {
-    return failAuthFlow(event, {
-      code: 'invalid_request',
-      error: { statusCode: 400, message: 'Invalid token' },
-      redirectTo,
-    })
-  }
-
-  // Two-step confirmation: a GET only hands the link over to the app's
-  // confirm page, whose button POSTs back here. Mail scanners that open links
-  // (e.g. Outlook Safe Links) then can't consume the one-time token.
+  // Two-step confirmation: a GET only parks the link in a cookie and opens the
+  // app's confirm page, whose button POSTs back here. Mail scanners that open
+  // links (e.g. Outlook Safe Links) then can't consume the one-time token, and
+  // the token never appears in the page's URL.
   const { confirm } = getAuthRedirectOptions(event)
   if (confirm) {
-    return sendRedirect(
-      event,
-      withQuery(getRelativeRedirectPath(confirm), { token_hash, type, redirect_to: redirectTo }),
-      302,
-    )
+    parkEmailLink(event, link)
+    return sendRedirect(event, confirm, 302)
   }
 
-  return verifyEmailLink(event, { token_hash, type, redirectTo })
+  return verifyEmailLink(event, link)
 })

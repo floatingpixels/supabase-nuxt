@@ -185,7 +185,7 @@ The suite currently covers:
 - auth redirect middleware behavior, pattern escaping, and redirect_to forwarding
 - server helper memoization and the cookie write adapter (chunking, committed responses, write failures)
 - callback and confirm handler behavior, including HTTP-level status, redirect, and cache-header checks
-- the `next` alias, same-host absolute redirect targets, the auth error page, two-step confirmation (GET hand-off, POST verification, cross-site refusal) and PKCE flow ids (`test/unit/auth-routes.test.ts`)
+- the `next` alias, same-host absolute redirect targets, the auth error page, two-step confirmation (link parked in a cookie on GET, POST verification, cross-site refusal) and PKCE flow ids (`test/unit/auth-routes.test.ts`)
 - email flows for every link type, password and email change, and passkeys, end to end
 - live login, redirect, session persistence, query, service role, and RLS smoke paths
 - packed pnpm consumer hydration and Vite CommonJS dependency interoperability

@@ -77,7 +77,7 @@ test('password recovery link signs the user in to change the password', async ({
   expect(await serverSessionEmail(page)).toBe(email)
 })
 
-test('password change from the account page checks the current password', async ({ page, goto }) => {
+test('password change from the account page sends the current password', async ({ page, goto }) => {
   const { email, password } = await createConfirmedUser(uniqueEmail('password'))
 
   await goto('/sign-in', { waitUntil: 'hydration' })
@@ -85,14 +85,22 @@ test('password change from the account page checks the current password', async 
   await goto('/account', { waitUntil: 'hydration' })
 
   await page.getByLabel('New password').fill('changed-password-1')
-  await page.getByLabel('Current password').fill('not-the-password')
-  await page.getByRole('button', { name: 'Save password' }).click()
-  await expect(page.getByTestId('account-status')).not.toHaveText('Password updated')
-  await expect(page.getByTestId('account-status')).not.toBeEmpty()
-
   await page.getByLabel('Current password').fill(password)
-  await page.getByRole('button', { name: 'Save password' }).click()
+  // Supabase reads `current_password`; supabase-js passes attributes through
+  // unchanged, so a misspelt key would be dropped without an error. Whether
+  // a wrong one is rejected depends on the project setting "require current
+  // password", which the local CLI stack cannot enable.
+  const [update] = await Promise.all([
+    page.waitForRequest(request => request.url().endsWith('/auth/v1/user') && request.method() === 'PUT'),
+    page.getByRole('button', { name: 'Save password' }).click(),
+  ])
+  expect(update.postDataJSON()).toMatchObject({ password: 'changed-password-1', current_password: password })
   await expect(page.getByTestId('account-status')).toHaveText('Password updated')
+
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await expect(page).toHaveURL('/sign-in')
+  await signInWithPassword(page, email, 'changed-password-1')
+  expect(await serverSessionEmail(page)).toBe(email)
 })
 
 test('email change is confirmed through /auth/confirm and the server sees the new address', async ({ page, goto, request }) => {

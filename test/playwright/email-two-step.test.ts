@@ -28,15 +28,18 @@ test('a mail scanner opening the link does not spend the token', async ({ page, 
   const link = await requestMagicLink(page, email)
 
   // The scanner follows the link and its redirect, but never submits the form.
+  // The link is parked in a cookie for /auth/confirm only; the confirm page's
+  // URL, which analytics or error trackers could record, carries no token.
   const scan = await request.get(link, { maxRedirects: 0 })
   expect(scan.status()).toBe(302)
-  expect(scan.headers()['location']).toMatch(/^\/auth\/confirm-link\?token_hash=[^&]+&type=email&redirect_to=%2Fwelcome$/)
+  expect(scan.headers()['location']).toBe('/auth/confirm-link')
   expect(scan.headers()['cache-control']).toContain('no-store')
+  expect(scan.headers()['set-cookie']).toMatch(/^supabase-nuxt-confirm=.+; Max-Age=600; Path=\/auth\/confirm; .*HttpOnly; SameSite=Lax/)
   expect((await request.get(scan.headers()['location']!)).status()).toBe(200)
 
   // The signed-out user lands on the confirm page; the auth redirect leaves it alone.
   await goto(link, { waitUntil: 'hydration' })
-  await expect(page).toHaveURL(/\/auth\/confirm-link\?/)
+  await expect(page).toHaveURL('/auth/confirm-link')
   expect(await serverSessionEmail(page)).toBeNull()
 
   await page.getByRole('button', { name: 'Continue' }).click()
@@ -48,6 +51,20 @@ test('a mail scanner opening the link does not spend the token', async ({ page, 
   await page.getByRole('button', { name: 'Continue' }).click()
   await expect(page).toHaveURL(/\/auth\/error\?error=otp_expired&redirect_to=(%2F|\/)welcome$/)
   await expect(page.getByTestId('auth-error-code')).toHaveText('otp_expired')
+})
+
+test('the confirm button without a parked link ends on the error page', async ({ page, goto, context }) => {
+  const { email } = await createConfirmedUser(uniqueEmail('two-step-gone'))
+  await goto('/sign-in', { waitUntil: 'hydration' })
+  const link = await requestMagicLink(page, email)
+
+  await goto(link, { waitUntil: 'hydration' })
+  // As if the 10 minutes ran out, or the page was opened in another browser.
+  await context.clearCookies({ name: 'supabase-nuxt-confirm' })
+  await page.getByRole('button', { name: 'Continue' }).click()
+
+  await expect(page).toHaveURL('/auth/error?error=otp_expired')
+  expect(await serverSessionEmail(page)).toBeNull()
 })
 
 // The router shows `%2F` decoded in page URLs, hence `(%2F|\/)`.

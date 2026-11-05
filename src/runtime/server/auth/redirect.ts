@@ -21,40 +21,53 @@ const hasUnsafeRedirectPrefix = (value: string) => {
 
 export const firstQueryValue = (value: unknown) => (Array.isArray(value) ? value[0] : value)
 
+/**
+ * Whether `url` is an http(s) URL without credentials on one of `hosts`
+ * (Host header values: hostname plus optional port).
+ */
+export const isOnHost = (url: string, hosts: string[]) => {
+  if (!/^https?:\/\//i.test(url) || hasControlCharacter(url)) {
+    return false
+  }
+  try {
+    const parsed = new URL(url)
+    return !parsed.username && !parsed.password && hosts.some(host => host.toLowerCase() === parsed.host)
+  } catch {
+    return false
+  }
+}
+
 // Supabase fills `{{ .RedirectTo }}` in email templates with an absolute URL
 // (the allow-listed `emailRedirectTo`/`redirectTo`, or the Site URL). One
 // that points at the host this request was sent to is reduced to its path;
-// every other absolute URL stays rejected.
-const sameHostPath = (value: string, host: string | undefined) => {
-  if (!host || !/^https?:\/\//i.test(value) || hasControlCharacter(value)) {
+// every other absolute URL stays rejected. The result is a path on this site
+// either way, so the host check keeps foreign URLs from being silently
+// rewritten rather than guarding against an open redirect.
+const sameHostPath = (value: string, hosts: string[]) => {
+  if (!isOnHost(value, hosts)) {
     return value
   }
-  try {
-    const url = new URL(value)
-    if (url.host === host.toLowerCase() && !url.username && !url.password) {
-      return `${url.pathname}${url.search}${url.hash}`
-    }
-  } catch {
-    // Not a URL; rejected below like any other non-path.
-  }
-  return value
+  const url = new URL(value)
+  return `${url.pathname}${url.search}${url.hash}`
 }
 
 /**
  * Validates a post-auth redirect target and returns it as a relative path.
  *
- * Only same-site paths pass. With `options.host` (the request's Host header),
- * an absolute http(s) URL on exactly that host is accepted and reduced to its
- * path, so email templates can pass Supabase's `{{ .RedirectTo }}` through.
+ * Only same-site paths pass. With `options.host` (the request's Host header,
+ * or several, e.g. with X-Forwarded-Host), an absolute http(s) URL on exactly
+ * that host is accepted and reduced to its path, so email templates can pass
+ * Supabase's `{{ .RedirectTo }}` through.
  */
-export const getRelativeRedirectPath = (value: unknown, options: { host?: string } = {}) => {
+export const getRelativeRedirectPath = (value: unknown, options: { host?: string | string[] } = {}) => {
   const rawRedirectTo = firstQueryValue(value)
 
   if (rawRedirectTo === undefined || rawRedirectTo === null || rawRedirectTo === '') {
     return '/'
   }
 
-  const redirectTo = typeof rawRedirectTo === 'string' ? sameHostPath(rawRedirectTo, options.host) : rawRedirectTo
+  const hosts = [options.host ?? []].flat()
+  const redirectTo = typeof rawRedirectTo === 'string' ? sameHostPath(rawRedirectTo, hosts) : rawRedirectTo
 
   if (
     typeof redirectTo !== 'string'
@@ -78,8 +91,8 @@ export const getRelativeRedirectPath = (value: unknown, options: { host?: string
  * template guides use it. Both go through the same validation, and a present
  * but invalid `redirect_to` never falls back to `next`.
  */
-export const getRedirectTarget = (query: Record<string, unknown>, host?: string) =>
-  getRelativeRedirectPath(firstQueryValue(query.redirect_to) ?? firstQueryValue(query.next), { host })
+export const getRedirectTarget = (query: Record<string, unknown>, hosts: string[]) =>
+  getRelativeRedirectPath(firstQueryValue(query.redirect_to) ?? firstQueryValue(query.next), { host: hosts })
 
 /** `path` with `params` appended to its query; empty values are skipped. */
 export const withQuery = (path: string, params: Record<string, string | undefined>) => {
