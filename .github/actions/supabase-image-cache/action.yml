@@ -6,7 +6,6 @@ description: >
   the pinned supabase CLI version and the stack configuration, so it
   invalidates exactly when the image set changes. On a cache miss the calling
   job pulls as usual and the save step uploads the images for future runs.
-  Adapted from besmyle-portal.
 
 runs:
   using: composite

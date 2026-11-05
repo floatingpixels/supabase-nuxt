@@ -9,7 +9,7 @@ allowBuilds:
 # This repo intentionally tracks fresh @supabase releases, so the default 24h
 # release-age gate would fail CI installs for a day after every routine bump.
 # The committed lockfile plus --frozen-lockfile installs remain the
-# supply-chain control (same setting as besmyle-portal).
+# supply-chain control.
 minimumReleaseAge: 0
 
 overrides:

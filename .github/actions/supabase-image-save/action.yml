@@ -3,7 +3,7 @@ description: >
   Archives the pulled Supabase stack images for the cache post-step to upload.
   Runs even when tests fail (the images were pulled either way), but only when
   the restore step missed. The companion restore action is
-  supabase-image-cache. Adapted from besmyle-portal.
+  supabase-image-cache.
 
 runs:
   using: composite
