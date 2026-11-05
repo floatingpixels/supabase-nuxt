@@ -28,6 +28,10 @@ export default defineNuxtModule<ModuleOptions>({
     redirectOptions: {
       login: '/login',
       exclude: [],
+      // Empty rather than absent, so NUXT_PUBLIC_SUPABASE_REDIRECT_OPTIONS_*
+      // can set them at runtime.
+      confirm: '',
+      authError: '',
     },
     clientOptions: {
       auth: {
@@ -71,6 +75,8 @@ export default defineNuxtModule<ModuleOptions>({
       redirectOptions: options.redirectOptions ?? {
         login: '/login',
         exclude: [],
+        confirm: '',
+        authError: '',
       },
       clientOptions: options.clientOptions ?? {
         auth: {
@@ -96,6 +102,14 @@ export default defineNuxtModule<ModuleOptions>({
       route: '/auth/confirm',
       handler: resolve('./runtime/server/auth/confirm'),
       method: 'get',
+    })
+
+    // Second step of the two-step email confirmation; answers 405 unless
+    // `redirectOptions.confirm` is set at runtime.
+    addServerHandler({
+      route: '/auth/confirm',
+      handler: resolve('./runtime/server/auth/confirm.post'),
+      method: 'post',
     })
 
     // inject server route to handle OAuth callback

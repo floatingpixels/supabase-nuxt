@@ -15,11 +15,14 @@ export default defineNuxtPlugin({
         if (useError().value) return
 
         const config = useRuntimeConfig().public.supabase
-        const { login, exclude } = config.redirectOptions
+        const { login, exclude, confirm, authError } = config.redirectOptions
 
-        // Do not redirect on login route and excluded routes. Only `*` is a
+        // Do not redirect on the login, email confirm and auth error pages,
+        // which serve signed-out users, nor on excluded routes. Only `*` is a
         // wildcard; every other character matches literally.
-        const isExcluded = [...(exclude || []), login || '/login'].some(path => {
+        const authPages = [confirm, authError].filter(Boolean).map(page => page!.split('?')[0]!)
+        const publicPaths = [...(exclude || []), login || '/login', ...authPages]
+        const isExcluded = publicPaths.some(path => {
           const pattern = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*')
           return new RegExp(`^${pattern}$`).test(to.path)
         })

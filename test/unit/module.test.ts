@@ -107,13 +107,18 @@ describe('module contract', () => {
     expect(addPlugin).toHaveBeenNthCalledWith(2, '/resolved/runtime/plugins/supabase.client')
     expect(addPlugin).toHaveBeenNthCalledWith(3, '/resolved/runtime/plugins/middleware-auth-redirect')
 
-    expect(addServerHandler).toHaveBeenCalledTimes(2)
+    expect(addServerHandler).toHaveBeenCalledTimes(3)
     expect(addServerHandler).toHaveBeenNthCalledWith(1, {
       route: '/auth/confirm',
       handler: '/resolved/runtime/server/auth/confirm',
       method: 'get',
     })
     expect(addServerHandler).toHaveBeenNthCalledWith(2, {
+      route: '/auth/confirm',
+      handler: '/resolved/runtime/server/auth/confirm.post',
+      method: 'post',
+    })
+    expect(addServerHandler).toHaveBeenNthCalledWith(3, {
       route: '/auth/callback',
       handler: '/resolved/runtime/server/auth/callback',
       method: 'get',
@@ -165,6 +170,32 @@ describe('module contract', () => {
       '@floatingpixels/supabase-nuxt > @supabase/ssr > cookie',
       '@floatingpixels/supabase-nuxt > @supabase/supabase-js',
     ])
+  })
+
+  it('deep-merges consumer clientOptions and redirectOptions into the defaults', async () => {
+    // Nuxt merges inline options with `defaults` through defu; a consumer
+    // that only adds auth or realtime options keeps PKCE and the rest.
+    const defu = (await import('defu')).default
+    const module = (await import('../../src/module')).default as unknown as TestModule & {
+      defaults: Record<string, unknown>
+    }
+
+    const merged = defu({
+      clientOptions: { auth: { experimental: { appendPkceFlowIdToRedirects: true } }, realtime: { worker: true } },
+      redirectOptions: { authError: '/login' },
+    }, module.defaults)
+
+    expect(merged.clientOptions).toEqual({
+      auth: {
+        flowType: 'pkce',
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+        experimental: { appendPkceFlowIdToRedirects: true },
+      },
+      realtime: { worker: true },
+    })
+    expect(merged.redirectOptions).toEqual({ login: '/login', exclude: [], confirm: '', authError: '/login' })
   })
 
   it('warns in dev when public credentials are missing and skips redirect plugin when disabled', async () => {

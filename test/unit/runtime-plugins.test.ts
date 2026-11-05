@@ -242,6 +242,34 @@ describe('runtime plugins', () => {
     expect(navigateTo).toHaveBeenCalledTimes(2)
   })
 
+  it('never redirects the email confirm and auth error pages', async () => {
+    useRuntimeConfig.mockReturnValue({
+      public: {
+        supabase: {
+          redirectOptions: {
+            login: '/sign-in',
+            exclude: [],
+            confirm: '/auth/confirm-link',
+            authError: '/auth/link-error?from=link',
+          },
+        },
+      },
+    })
+    useSupabaseUser.mockResolvedValue({ data: null, error: null })
+
+    const plugin = (await import('../../src/runtime/plugins/middleware-auth-redirect')).default as unknown as PluginWithoutReturn
+    plugin.setup()
+    const middleware = addRouteMiddleware.mock.calls[0]![1]
+
+    // Both serve signed-out users following an email link.
+    await middleware({ path: '/auth/confirm-link', fullPath: '/auth/confirm-link?token_hash=x&type=invite' })
+    await middleware({ path: '/auth/link-error', fullPath: '/auth/link-error?from=link&error=otp_expired' })
+    expect(navigateTo).not.toHaveBeenCalled()
+
+    await middleware({ path: '/private', fullPath: '/private' })
+    expect(navigateTo).toHaveBeenCalledTimes(1)
+  })
+
   it('skips redirects for excluded paths and authenticated users', async () => {
     useRuntimeConfig.mockReturnValue({
       public: {

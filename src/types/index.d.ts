@@ -36,6 +36,25 @@ export interface RedirectOptions {
    * @type string[]
    */
   exclude?: string[]
+  /**
+   * Page for two-step email confirmation. When set, `GET /auth/confirm` does
+   * not verify the link; it redirects to this page with `token_hash`, `type`
+   * and `redirect_to` in the query, and the page's form POSTs them back to
+   * `/auth/confirm`. Protects one-time links from mail scanners that open
+   * them. The page is excluded from the auth redirect.
+   * @default '' (GET verifies directly)
+   * @type string
+   */
+  confirm?: string
+  /**
+   * Page that failed `/auth/confirm` and `/auth/callback` requests redirect
+   * to, with a short code in the `error` query parameter (e.g. `otp_expired`)
+   * and `redirect_to` when the link carried a valid one. The page is excluded
+   * from the auth redirect.
+   * @default '' (failures answer with an HTTP error)
+   * @type string
+   */
+  authError?: string
 }
 
 export interface ModuleOptions {

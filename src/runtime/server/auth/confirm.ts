@@ -1,27 +1,40 @@
-import type { EmailOtpType } from '@supabase/supabase-js'
-import { createError, getQuery, sendRedirect, defineEventHandler } from 'h3'
-import { supabaseServerClient } from '#supabase/server'
-import { firstQueryValue, getRelativeRedirectPath, setAuthNoStoreHeaders } from './redirect'
+import type { H3Error } from 'h3'
+import { getQuery, getRequestHost, sendRedirect, defineEventHandler } from 'h3'
+import { failAuthFlow, getAuthRedirectOptions, isEmailOtpType, verifyEmailLink } from './flow'
+import { firstQueryValue, getRedirectTarget, getRelativeRedirectPath, setAuthNoStoreHeaders, withQuery } from './redirect'
 
 export default defineEventHandler(async event => {
   setAuthNoStoreHeaders(event)
 
   const query = getQuery(event)
-  const token_hash = firstQueryValue(query.token_hash) as string
-  const type = firstQueryValue(query.type) as EmailOtpType | null
-  const redirect_to = getRelativeRedirectPath(query.redirect_to)
-  if (!token_hash || !type) {
-    throw createError({ statusCode: 400, message: 'Invalid token' })
+  let redirectTo: string
+  try {
+    redirectTo = getRedirectTarget(query, getRequestHost(event))
+  } catch (error) {
+    return failAuthFlow(event, { code: 'invalid_redirect', error: error as H3Error })
   }
 
-  const supabase = await supabaseServerClient(event)
-  const { error } = await supabase.auth.verifyOtp({ type, token_hash })
-
-  if (error) {
-    // AuthError carries the HTTP status GoTrue answered with; an expired or
-    // reused token is a client error, not a 500.
-    throw createError({ statusCode: error.status ?? 400, message: error.message })
+  const token_hash = firstQueryValue(query.token_hash)
+  const type = firstQueryValue(query.type)
+  if (typeof token_hash !== 'string' || !token_hash || !isEmailOtpType(type)) {
+    return failAuthFlow(event, {
+      code: 'invalid_request',
+      error: { statusCode: 400, message: 'Invalid token' },
+      redirectTo,
+    })
   }
 
-  await sendRedirect(event, redirect_to, 302)
+  // Two-step confirmation: a GET only hands the link over to the app's
+  // confirm page, whose button POSTs back here. Mail scanners that open links
+  // (e.g. Outlook Safe Links) then can't consume the one-time token.
+  const { confirm } = getAuthRedirectOptions(event)
+  if (confirm) {
+    return sendRedirect(
+      event,
+      withQuery(getRelativeRedirectPath(confirm), { token_hash, type, redirect_to: redirectTo }),
+      302,
+    )
+  }
+
+  return verifyEmailLink(event, { token_hash, type, redirectTo })
 })

@@ -55,6 +55,7 @@ vi.mock('h3', () => ({
   setResponseHeader,
   removeResponseHeader,
   getQuery,
+  getRequestHost: () => 'localhost:3000',
   sendRedirect,
   createError,
 }))
@@ -67,6 +68,11 @@ describe('server runtime', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    // Default config: no auth error or confirm page, so the auth routes keep
+    // their original throw-on-failure behaviour.
+    useRuntimeConfig.mockReturnValue({
+      public: { supabase: { redirectOptions: { login: '/login', exclude: [] } } },
+    })
   })
 
   it('memoizes the request-scoped supabase server client and forwards cookie helpers', async () => {
