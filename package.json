@@ -2,7 +2,10 @@
   "name": "@floatingpixels/supabase-nuxt",
   "version": "0.8.0",
   "description": "Supabase module for Nuxt",
-  "repository": "floatingpixels/supabase-nuxt",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/floatingpixels/supabase-nuxt.git"
+  },
   "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@12.16.1",
