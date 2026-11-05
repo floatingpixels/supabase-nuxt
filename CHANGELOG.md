@@ -2,6 +2,20 @@
 
 ## 0.8.0
 
+### Fixes
+
+- `@nuxt/kit` is now a declared dependency. The module imports it at build time but only listed it as a devDependency, so installs without hoisting (`hoist: false`, strict layouts) failed with `Cannot find module '@nuxt/kit'`. The packed-consumer test now installs with `hoist: false`.
+- Two-step confirmation works under `app.baseURL`. The handoff cookie's path and the redirects to the `confirm` and `authError` pages now include the prefix. Before, browsers didn't send the cookie to `/<base>/auth/confirm`, and the confirm step always failed.
+
+### Documentation
+
+- Secure email change: both links are required while email confirmations are on. The 0.7.3 notes attributed the single-link behaviour to GoTrue; it comes from autoconfirm (`enable_confirmations = false`). The local stack now runs with confirmations on, and the test checks real double confirmation.
+- The playground's account page stays put and shows the error when sign-out fails, as happens since supabase-js 2.119 when a global sign-out fails.
+
+## 0.7.3
+
+Released as a patch, although it adds features; 0.8.0 completes them.
+
 ### Features
 
 - **Auth error page:** `redirectOptions.authError` sends failed `/auth/confirm` and `/auth/callback` requests (expired or reused links, incomplete links, refused OAuth sign-ins) to a page of your app with `?error=<code>&redirect_to=<page>`, instead of an HTTP error. Off by default.

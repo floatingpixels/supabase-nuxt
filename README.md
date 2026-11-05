@@ -266,8 +266,13 @@ export default defineNuxtConfig({
 Email templates keep pointing at `/auth/confirm`. A `GET` there now validates the link and keeps it, unspent, in a short-lived cookie (10 minutes, `HttpOnly`, `SameSite=Lax`, sent only to `/auth/confirm`). It then redirects to your confirm page. The page shows a button that posts back to `/auth/confirm`, which takes the link from the cookie (clearing it), verifies the token, sets the session cookies and redirects with `303`:
 
 ```vue [pages/auth/confirm-link.vue]
+<script setup lang="ts">
+// The module's routes live under app.baseURL, like your pages.
+const action = `${useRuntimeConfig().app.baseURL}auth/confirm`
+</script>
+
 <template>
-  <form method="post" action="/auth/confirm">
+  <form method="post" :action="action">
     <button type="submit">Continue</button>
   </form>
 </template>
@@ -276,6 +281,7 @@ Email templates keep pointing at `/auth/confirm`. A `GET` there now validates th
 - **The token never appears in the confirm page's URL.** So analytics, error trackers and the browser history on that page can't record a working sign-in link. The page receives no query parameters at all.
 - **A plain HTML form works without JavaScript.** Don't submit it automatically on load: scanners that run JavaScript would spend the token again.
 - **One link at a time.** The confirm step works in the browser that opened the link, within 10 minutes, once. Otherwise the button ends like an expired link (`otp_expired`). If several email links are opened before any is confirmed, the last one opened is confirmed.
+- **Works under a path prefix.** With `app.baseURL` (e.g. `/app/`), the routes are `/app/auth/confirm` and `/app/auth/callback`. The cookie and the redirects to the `confirm` and `authError` pages follow the prefix. Give these options as app routes without the prefix, like `login`. Point the email templates at the prefixed route, e.g. with a Site URL that includes the prefix.
 - **Protected against other sites.** `POST /auth/confirm` answers `405` while `confirm` is not set, and `403` to cross-site submissions (judged by `Sec-Fetch-Site`, or by `Origin` in browsers that don't send it). Because of `SameSite=Lax`, the browser doesn't send the cookie with a cross-site post anyway.
 
 ### OAuth Authentication
@@ -354,7 +360,7 @@ await supabase.auth.updateUser({ email: newEmail }, {
 
 Invites are sent from the server with the service role client: `(await supabaseServiceRole(event)).auth.admin.inviteUserByEmail(email, { redirectTo })`.
 
-> ℹ️ Observed with the local Supabase stack of CLI 3.0.0 (November 2026): with secure email change enabled, the first of the two links that is opened completes the change, and the other link is then reported as used (`otp_expired`). Check this against your Supabase version before telling users they must confirm both addresses.
+> ℹ️ With secure email change, both links must be opened. The first one is accepted (and redirects as usual) but changes nothing yet; the second completes the change. This needs email confirmations to be enabled: with autoconfirm (`[auth.email] enable_confirmations = false` locally), Supabase completes the change on the first link.
 
 > ℹ️ Since `@supabase/supabase-js` 2.119, `signOut({ scope: 'global' })` keeps the local session and returns the error when the server-side sign-out fails (a 401, 403 or 404 counts as success). Fall back to `signOut({ scope: 'local' })` if you need the user signed out regardless.
 

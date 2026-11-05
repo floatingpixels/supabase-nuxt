@@ -81,10 +81,10 @@ source — the installed source wins.
 - **Passkeys.** auth-js 2.119 ignores `auth.experimental.passkey` (deprecated,
   on by default). Re-check whether the next major removes the passkey API
   from `experimental` entirely or changes `auth.passkey.*`.
-- **Secure email change.** As of the CLI 3.0.0 local stack, GoTrue completes an
-  email change on the first of the two confirmation links. The README notes
-  this, and `test/playwright/email-flows.test.ts` pins it; re-verify when
-  GoTrue changes.
+- **Secure email change.** GoTrue requires both links only while
+  confirmations are on (no autoconfirm); `supabase/config.toml` therefore sets
+  `enable_confirmations = true`, and `test/playwright/email-flows.test.ts`
+  checks that the first link changes nothing and the second completes it.
 - **`cookie` npm package.** It was removed from dependencies (only
   `@supabase/ssr` uses it internally). Flag any reintroduction.
 

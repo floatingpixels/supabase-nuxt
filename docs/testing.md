@@ -50,7 +50,7 @@ Purpose:
 - verify session persistence across reloads and server requests
 - verify end-to-end data fetching and RLS behavior
 - verify every email flow through `/auth/confirm` (magic link, invite, recovery, email change), reading the emails from the local stack's Mailpit
-- verify the opt-in auth options (two-step confirmation, auth error page), set at runtime through `NUXT_PUBLIC_SUPABASE_REDIRECT_OPTIONS_*` env overrides
+- verify the opt-in auth options (two-step confirmation, auth error page), set at runtime through `NUXT_PUBLIC_SUPABASE_REDIRECT_OPTIONS_*` env overrides, also with the app built under `app.baseURL: '/app/'`
 - verify passkey registration, sign-in and management with a virtual WebAuthn authenticator (Chromium only)
 
 These tests use `@nuxt/test-utils/playwright` and run against the `playground/` app. Playwright spins up its own temporary built server for the tests. You do not need `pnpm run dev`.
@@ -66,7 +66,7 @@ Location: `test/consumer`
 Purpose:
 
 - pack the module exactly as a registry consumer receives it
-- install the tarball in an isolated pnpm app on a pinned Nuxt 4 release, with no direct `cookie` dependency and h3 2.x hoisted
+- install the tarball in an isolated pnpm app on a pinned Nuxt 4 release, without hoisting (`hoist: false`, so every runtime import must be a declared dependency), with no direct `cookie` dependency and h3 2.x as a direct dependency
 - verify a cold Vite dev start hydrates and initializes `useSupabaseClient()` without CommonJS/ESM errors
 - verify a signed-out SSR request to a protected page redirects to the login page
 - verify every `optimizeDeps.include` entry the module adds resolves (no Vite "Failed to resolve dependency" / Nuxt `NUXT_B7002` warning)

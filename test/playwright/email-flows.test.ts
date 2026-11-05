@@ -103,7 +103,7 @@ test('password change from the account page sends the current password', async (
   expect(await serverSessionEmail(page)).toBe(email)
 })
 
-test('email change is confirmed through /auth/confirm and the server sees the new address', async ({ page, goto, request }) => {
+test('secure email change needs the links to both addresses', async ({ page, goto }) => {
   const { email, password } = await createConfirmedUser(uniqueEmail('change-old'))
   const newEmail = uniqueEmail('change-new')
 
@@ -115,21 +115,23 @@ test('email change is confirmed through /auth/confirm and the server sees the ne
   await page.getByRole('button', { name: 'Change email' }).click()
   await expect(page.getByTestId('account-status')).toHaveText('Check both inboxes to confirm the change')
 
-  // Secure email change (`double_confirm_changes`) mails both addresses.
+  // Secure email change (`double_confirm_changes`, with `enable_confirmations`
+  // on) mails both addresses, and both links must be opened.
   const oldAddressLink = await emailLink(email)
   const newAddressLink = await emailLink(newEmail)
   expect(oldAddressLink).toContain('type=email_change')
   expect(newAddressLink).toContain('type=email_change')
 
+  // The first link is accepted but changes nothing yet; the user is still
+  // signed in with the old address.
   await goto(newAddressLink, { waitUntil: 'hydration' })
+  await expect(page).toHaveURL('/account')
+  await expect(page.getByTestId('account-email')).toHaveText(email)
+  expect(await serverSessionEmail(page)).toBe(email)
+
+  // The second completes the change, and the new session carries it.
+  await goto(oldAddressLink, { waitUntil: 'hydration' })
   await expect(page).toHaveURL('/account')
   await expect(page.getByTestId('account-email')).toHaveText(newEmail)
   expect(await serverSessionEmail(page)).toBe(newEmail)
-
-  // Upstream behaviour as of the local GoTrue in Supabase CLI 3.0.0
-  // (2026-11-05): the first confirmed link completes the change, and the
-  // other address's link is then spent. If GoTrue starts requiring both
-  // links, this flips to a redirect, and the README note needs updating.
-  const secondLink = await request.get(oldAddressLink, { maxRedirects: 0 })
-  expect(secondLink.status()).toBe(403)
 })
