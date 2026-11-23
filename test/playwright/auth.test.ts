@@ -81,3 +81,22 @@ test('session survives a server request and browser reload', async ({ page, goto
 
   expect(secondSession).toEqual(firstSession)
 })
+
+test('server routes written with nuxt/server see the session too', async ({ page, goto }) => {
+  await goto('/sign-in', { waitUntil: 'hydration' })
+
+  const signedOut = await page.evaluate(async () => {
+    return await fetch('/api/portable-session').then(response => response.json())
+  })
+  expect(signedOut).toEqual({ user: null })
+
+  await page.locator('input[type="email"]').fill('user1@example.com')
+  await page.locator('input[type="password"]').fill('password')
+  await page.getByRole('button', { name: 'Sign In with E-Mail and' }).click()
+  await page.waitForSelector('pre')
+
+  const signedIn = await page.evaluate(async () => {
+    return await fetch('/api/portable-session').then(response => response.json())
+  })
+  expect(signedIn).toMatchObject({ user: { email: 'user1@example.com' } })
+})

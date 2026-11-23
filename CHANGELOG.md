@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Features
+
+- `supabaseServerClient`, `supabaseServiceRole` and `setAuthNoStoreHeaders` accept the `RequestEvent` of `nuxt/server` handlers (Nuxt 4.6 and later) as well as h3's `H3Event`, so server routes written with `nuxt/server`'s `defineEventHandler` type-check. Before, they worked at runtime but failed the type check.
+
 ### Fixes
 
 - A session close to expiry is now refreshed and its cookies written before `supabaseServerClient()` resolves, so before the server plugin hands out the client. Creating the client already starts a refresh in the background (auth-js emits `INITIAL_SESSION` to the `onAuthStateChange` subscribers that supabase-js and `@supabase/ssr` register). On requests where nothing awaited a session call, that refresh finished after the response was sent. The server logged an unhandled rejection ("Supabase auth cookies … could not be persisted because the response was already sent"), and the browser kept the superseded cookies. Affected were SSR pages that made no Supabase call (with the redirect middleware on, typically the login page, which it skips) and server routes that only created the client.

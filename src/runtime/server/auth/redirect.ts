@@ -1,5 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError, setResponseHeaders } from 'h3'
+import type { ServerEvent } from '../services/supabaseServerClient'
 
 // Browsers strip ASCII tabs and newlines before resolving a Location header, so
 // `/\t/evil.com` would otherwise resolve as the protocol-relative `//evil.com`.
@@ -118,8 +119,8 @@ export const authErrorCode = (value: unknown, fallback: string) => {
 // identical values means the order of header writes on a request never
 // matters, and error responses get the same protection as cookie-carrying
 // ones.
-export const setAuthNoStoreHeaders = (event: H3Event) => {
-  setResponseHeaders(event, {
+export const setAuthNoStoreHeaders = (event: ServerEvent) => {
+  setResponseHeaders(event as H3Event, {
     'Cache-Control': 'private, no-cache, no-store, must-revalidate, max-age=0',
     'Expires': '0',
     'Pragma': 'no-cache',

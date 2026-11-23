@@ -574,6 +574,10 @@ export default eventHandler(async event => {
 })
 ```
 
+It takes the event of h3's `eventHandler`/`defineEventHandler`, or, on Nuxt 4.6 and later, of `defineEventHandler` from `nuxt/server`. So do `supabaseServiceRole` and `setAuthNoStoreHeaders`.
+
+The returned promise resolves once the session from the request cookies is loaded. If the session was close to expiry, it is refreshed by then and its cookies are on the response. This also holds on routes that make no other Supabase call.
+
 ### Always await Supabase calls before the response is sent
 
 Supabase rotates the access token in the background, and the rotated session is

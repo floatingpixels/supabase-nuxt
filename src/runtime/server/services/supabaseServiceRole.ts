@@ -2,6 +2,7 @@ import type { SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-j
 import { createClient } from '@supabase/supabase-js'
 import type { H3Event } from 'h3'
 import { useRuntimeConfig } from '#imports'
+import type { ServerEvent } from './supabaseServerClient'
 
 type ClientFactory<T> = (
   supabaseUrl: string,
@@ -9,7 +10,9 @@ type ClientFactory<T> = (
   options: SupabaseClientOptions<string>,
 ) => SupabaseClient<T>
 
-export const supabaseServiceRole = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
+export const supabaseServiceRole = async <T>(serverEvent: ServerEvent): Promise<SupabaseClient<T>> => {
+  // A `nuxt/server` event is a Proxy over the H3Event (see ServerEvent).
+  const event = serverEvent as H3Event
   const {
     supabase: { serviceRoleKey },
     public: {

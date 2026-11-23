@@ -7,6 +7,15 @@ import { useRuntimeConfig } from '#imports'
 
 type CookieSerializeOptions = Parameters<typeof setCookie>[3]
 
+/**
+ * The request event the server helpers accept: h3's `H3Event`, or the
+ * `RequestEvent` that handlers written with `nuxt/server` (Nuxt ≥ 4.6) receive.
+ * The latter is matched by shape rather than imported, so apps on older Nuxt 4
+ * releases, where it does not exist, still type-check. On nitropack v2 it is a
+ * Proxy over the `H3Event`, so h3's helpers and `event.context` work on it.
+ */
+export type ServerEvent = H3Event | { readonly req: Request, readonly context: object }
+
 type CookieToSet = {
   name: string
   value: string
@@ -148,8 +157,8 @@ export const requestClient = async <T>(event: H3Event): Promise<RequestClient<T>
   }
 }
 
-export const supabaseServerClient = async <T>(event: H3Event): Promise<SupabaseClient<T>> => {
-  const { client, sessionLoaded } = await requestClient<T>(event)
+export const supabaseServerClient = async <T>(event: ServerEvent): Promise<SupabaseClient<T>> => {
+  const { client, sessionLoaded } = await requestClient<T>(event as H3Event)
   await sessionLoaded
   return client
 }
