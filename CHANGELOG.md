@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.0
 
 ### Breaking Changes
 
@@ -19,8 +19,8 @@
   - `supabaseServerClient()` now rejects when the refresh's cookies cannot be written, for example when the client is first created after the response was sent. Before, the first query on that client failed the same way.
   - While Supabase Auth is unreachable, a request whose session needs refreshing now waits for auth-js's retries (up to about 30 seconds) even on pages that make no Supabase call. Pages that query Supabase or check the user already waited that long.
   - `/auth/callback` starts the code exchange before it awaits that session load, and waits for both to finish, even when one fails. Otherwise a browser still holding a session with a dead refresh token would lose the PKCE code verifier to the sign-out, and the first sign-in attempt would fail with "PKCE code verifier not found".
-
 - `auth.throwOnError: true` in `clientOptions` no longer bypasses the module's error handling. `useSupabaseUser()` and the redirect middleware return thrown auth errors as `{ error }`, so a signed-out user still reaches the login page. `/auth/confirm` and `/auth/callback` still send failed links to the `authError` page instead of throwing. Errors that are not auth errors still throw, so a token auth-js can't verify fails loudly instead of looking like a sign-out.
+
 ### Dependencies
 
 - `@supabase/supabase-js` ^2.119.2.
