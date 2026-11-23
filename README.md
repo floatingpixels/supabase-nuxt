@@ -7,7 +7,7 @@
 
 ## Features
 
-[@floatingpixels/supabase-nuxt](https://github.com/floatingpixels/supabase-nuxt) is a Nuxt module for first-class integration with Supabase. It makes it easy to use Supabase authentication, database and realtime features in your Nuxt 3 or Nuxt 4 application. Especially when using server-side rendering (SSR), using Supabase can be tricky, this module takes care of the intricacies and lets you simply use the power of Supabase!
+[@floatingpixels/supabase-nuxt](https://github.com/floatingpixels/supabase-nuxt) is a Nuxt module for first-class integration with Supabase. It makes it easy to use Supabase authentication, database and realtime features in your Nuxt 4 application. Especially when using server-side rendering (SSR), using Supabase can be tricky, this module takes care of the intricacies and lets you simply use the power of Supabase!
 
 Check out the [Nuxt](https://nuxt.com/docs) documentation and [Supabase](https://supabase.com/docs) to learn more.
 

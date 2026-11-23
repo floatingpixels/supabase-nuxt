@@ -17,7 +17,7 @@ export default defineNuxtModule<ModuleOptions>({
     name: 'supabase-nuxt',
     configKey: 'supabase',
     compatibility: {
-      nuxt: '>=3.0.0',
+      nuxt: '>=4.0.0',
     },
   },
   defaults: {

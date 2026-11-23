@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Breaking Changes
+
+- Requires Nuxt 4 (`compatibility.nuxt` is `>=4.0.0`); Nuxt 3 reached end of life on 2026-07-31. On Nuxt 3 the module is now disabled at startup with a warning ("disabled due to incompatibility issues"), or the build fails with `experimental.enforceModuleCompatibility`, so the app runs without it. Stay on 0.8.x for Nuxt 3.
+
 ### Features
 
 - `NUXT_SUPABASE_SECRET_KEY` sets the secret key for `supabaseServiceRole`, matching Supabase's secret keys (`sb_secret_…`); Supabase is deprecating the legacy `service_role` key. `NUXT_SUPABASE_SERVICE_ROLE_KEY` keeps working, and `NUXT_SUPABASE_SECRET_KEY` wins when both are set. The `secretKey` option is unchanged. The runtime config gains `supabase.secretKey`; `supabase.serviceRoleKey` is deprecated.
