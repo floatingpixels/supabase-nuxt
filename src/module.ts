@@ -46,7 +46,7 @@ export default defineNuxtModule<ModuleOptions>({
   setup(options, nuxt) {
     const { resolve } = createResolver(import.meta.url)
     const publicSupabaseConfig = nuxt.options.runtimeConfig.public.supabase as Partial<ModuleOptions> | undefined
-    const supabaseConfig = nuxt.options.runtimeConfig.supabase as { serviceRoleKey?: string } | undefined
+    const supabaseConfig = nuxt.options.runtimeConfig.supabase as { secretKey?: string, serviceRoleKey?: string } | undefined
 
     // Make sure url and key are set either in environment or module options.
     // Dev only: production builds routinely receive these via NUXT_* env vars
@@ -88,7 +88,13 @@ export default defineNuxtModule<ModuleOptions>({
       },
     }) as typeof nuxt.options.runtimeConfig.public.supabase
 
+    // `secretKey` is set by NUXT_SUPABASE_SECRET_KEY. `serviceRoleKey`, set by
+    // the older NUXT_SUPABASE_SERVICE_ROLE_KEY, keeps carrying the `secretKey`
+    // option as its default, so an app that overrides the option with that
+    // variable at runtime keeps working unchanged. The service-role client
+    // takes `secretKey` first.
     nuxt.options.runtimeConfig.supabase = defu(supabaseConfig, {
+      secretKey: '',
       serviceRoleKey: options.secretKey ?? '',
     })
 

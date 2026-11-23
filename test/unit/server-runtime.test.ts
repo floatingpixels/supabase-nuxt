@@ -143,7 +143,7 @@ describe('server runtime', () => {
     })
 
     const { supabaseServiceRole } = await import('../../src/runtime/server/services/supabaseServiceRole')
-    await expect(supabaseServiceRole(event)).rejects.toThrow('Missing `NUXT_SUPABASE_SERVICE_ROLE_KEY` in `.env`')
+    await expect(supabaseServiceRole(event)).rejects.toThrow('Missing `NUXT_SUPABASE_SECRET_KEY`')
     expect(useRuntimeConfig).toHaveBeenCalledWith(event)
 
     const serviceClient = { kind: 'service-role-client' }
@@ -190,6 +190,22 @@ describe('server runtime', () => {
     expect(parseCookies).not.toHaveBeenCalled()
     expect(setCookie).not.toHaveBeenCalled()
     expect(setResponseHeaders).not.toHaveBeenCalled()
+  })
+
+  it('takes NUXT_SUPABASE_SECRET_KEY before the legacy service role key', async () => {
+    const runtimeConfig = (supabase: Record<string, string>) => ({
+      supabase,
+      public: { supabase: { url: 'https://project.supabase.co', clientOptions: {} } },
+    })
+    const { supabaseServiceRole } = await import('../../src/runtime/server/services/supabaseServiceRole')
+
+    useRuntimeConfig.mockReturnValueOnce(runtimeConfig({ secretKey: 'sb_secret_new', serviceRoleKey: 'legacy-key' }))
+    await supabaseServiceRole({ context: {} } as unknown as EventWithContext)
+    expect(createClient).toHaveBeenLastCalledWith('https://project.supabase.co', 'sb_secret_new', expect.anything())
+
+    useRuntimeConfig.mockReturnValueOnce(runtimeConfig({ secretKey: '', serviceRoleKey: 'legacy-key' }))
+    await supabaseServiceRole({ context: {} } as unknown as EventWithContext)
+    expect(createClient).toHaveBeenLastCalledWith('https://project.supabase.co', 'legacy-key', expect.anything())
   })
 
   it('keeps service role PostgREST and auth admin calls independent from user cookies', async () => {

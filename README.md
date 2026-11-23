@@ -46,7 +46,7 @@ NUXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=""
 
 When dynamically setting the variables in an environment, make sure to prefix the public environment variables with `NUXT_PUBLIC_` in order to use `runtimeConfig`.
 
-The public keys are required to be set in the environment for the module to work. If the service role is needed, you should also set `NUXT_SUPABASE_SERVICE_ROLE_KEY` in the environment, which will be only available on the server side as a private runtime variable.
+The public keys are required to be set in the environment for the module to work. If you use `supabaseServiceRole`, also set `NUXT_SUPABASE_SECRET_KEY` (a secret key, `sb_secret_…`) in the environment. It is only available on the server side, as a private runtime variable. The older `NUXT_SUPABASE_SERVICE_ROLE_KEY` still works; when both are set, `NUXT_SUPABASE_SECRET_KEY` wins.
 
 ## Options
 
@@ -77,9 +77,9 @@ Supabase 'publishable key', used to access the Supabase API gateway and interact
 
 ### `secretKey`
 
-Default: `process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY`
+Default: `undefined`, set at runtime by `NUXT_SUPABASE_SECRET_KEY` (or the older `NUXT_SUPABASE_SERVICE_ROLE_KEY`)
 
-Supabase 'service role key', has super admin rights and can bypass your Row Level Security. This can be any secret key configured in your Supabase project.
+A Supabase secret key (`sb_secret_…`) for `supabaseServiceRole`. It bypasses Row Level Security. A legacy `service_role` key works too, but Supabase is deprecating those keys ([API keys](https://supabase.com/docs/guides/api/api-keys)). Keep it out of `nuxt.config` in your repository; set it through the environment.
 
 ### `redirect`
 
@@ -613,11 +613,11 @@ Make requests with super admin rights to the Supabase API with the `supabaseServ
 
 It provides similar functionality as the `supabaseServerClient` but it provides a client with super admin rights that can bypass your [Row Level Security](https://supabase.com/docs/guides/auth/row-level-security).
 
-The service-role client is isolated from the incoming user's browser session. It does not read or write Supabase auth cookies, so database requests always use the configured service role key instead of a signed-in user's access token.
+The service-role client is isolated from the incoming user's browser session. It does not read or write Supabase auth cookies, so database requests always use the configured secret key instead of a signed-in user's access token.
 
-The client is initialized with the `NUXT_SUPABASE_SERVICE_ROLE_KEY` you must have in your environment. Check out the doc if you want to know more about [Supabase API keys](https://supabase.com/docs/guides/api/api-keys).
+The client is initialized with the secret key from `NUXT_SUPABASE_SECRET_KEY` (or the older `NUXT_SUPABASE_SERVICE_ROLE_KEY`), which you must have in your environment. Check out the doc if you want to know more about [Supabase API keys](https://supabase.com/docs/guides/api/api-keys).
 
-> ⚠️ The service key gives admin access to your database, be careful to not expose it in your client side code or in your git repository.
+> ⚠️ The secret key gives admin access to your database, be careful to not expose it in your client side code or in your git repository.
 
 In your server route use the `supabaseServiceRole` from `#supabase/server`.
 

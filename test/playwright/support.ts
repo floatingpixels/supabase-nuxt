@@ -7,7 +7,7 @@ import type { Page } from '@playwright/test'
 const mailpitUrl = process.env.MAILPIT_URL ?? 'http://127.0.0.1:54324'
 
 export const adminClient = () =>
-  createClient(process.env.NUXT_PUBLIC_SUPABASE_URL!, process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY!, {
+  createClient(process.env.NUXT_PUBLIC_SUPABASE_URL!, process.env.NUXT_SUPABASE_SECRET_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 

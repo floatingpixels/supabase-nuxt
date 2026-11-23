@@ -8,6 +8,12 @@ declare module '@nuxt/schema' {
 
   interface RuntimeConfig {
     supabase: {
+      /** The secret key (`sb_secret_…`), from NUXT_SUPABASE_SECRET_KEY. */
+      secretKey?: string
+      /**
+       * The `secretKey` option, or the key from NUXT_SUPABASE_SERVICE_ROLE_KEY.
+       * @deprecated Set NUXT_SUPABASE_SECRET_KEY instead.
+       */
       serviceRoleKey?: string
     }
   }
@@ -76,8 +82,10 @@ export interface ModuleOptions {
   publishableKey?: string
 
   /**
-   * Supabase Secret Service Role key
-   * @example '123456789'
+   * Supabase secret key (`sb_secret_…`, or the legacy `service_role` key),
+   * for `supabaseServiceRole`. Server-only. At runtime, NUXT_SUPABASE_SECRET_KEY
+   * (or the older NUXT_SUPABASE_SERVICE_ROLE_KEY) overrides it.
+   * @example 'sb_secret_…'
    * @type string
    * @docs https://supabase.com/docs/reference/javascript/initializing#parameters
    */

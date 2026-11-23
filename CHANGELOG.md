@@ -4,6 +4,7 @@
 
 ### Features
 
+- `NUXT_SUPABASE_SECRET_KEY` sets the secret key for `supabaseServiceRole`, matching Supabase's secret keys (`sb_secret_…`); Supabase is deprecating the legacy `service_role` key. `NUXT_SUPABASE_SERVICE_ROLE_KEY` keeps working, and `NUXT_SUPABASE_SECRET_KEY` wins when both are set. The `secretKey` option is unchanged. The runtime config gains `supabase.secretKey`; `supabase.serviceRoleKey` is deprecated.
 - `supabaseServerClient`, `supabaseServiceRole` and `setAuthNoStoreHeaders` accept the `RequestEvent` of `nuxt/server` handlers (Nuxt 4.6 and later) as well as h3's `H3Event`, so server routes written with `nuxt/server`'s `defineEventHandler` type-check. Before, they worked at runtime but failed the type check.
 
 ### Fixes

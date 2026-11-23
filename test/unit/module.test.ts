@@ -94,7 +94,11 @@ describe('module contract', () => {
         },
       },
     })
+    // The option stays the default of the legacy key, so an app overriding it
+    // with NUXT_SUPABASE_SERVICE_ROLE_KEY keeps working; NUXT_SUPABASE_SECRET_KEY
+    // sets `secretKey`, which the service-role client takes first.
     expect(nuxt.options.runtimeConfig.supabase).toEqual({
+      secretKey: '',
       serviceRoleKey: 'service-role-key',
     })
     expect(nuxt.options.alias).toEqual({
@@ -318,6 +322,7 @@ describe('module contract', () => {
       },
     })
     expect(nuxt.options.runtimeConfig.supabase).toEqual({
+      secretKey: '',
       serviceRoleKey: 'runtime-service-role-key',
     })
   })

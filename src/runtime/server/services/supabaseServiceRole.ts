@@ -14,15 +14,17 @@ export const supabaseServiceRole = async <T>(serverEvent: ServerEvent): Promise<
   // A `nuxt/server` event is a Proxy over the H3Event (see ServerEvent).
   const event = serverEvent as H3Event
   const {
-    supabase: { serviceRoleKey },
+    supabase: { secretKey: configuredSecretKey, serviceRoleKey },
     public: {
       supabase: { url },
     },
   } = useRuntimeConfig(event)
 
-  // Make sure service key is set
-  if (!serviceRoleKey) {
-    throw new Error('Missing `NUXT_SUPABASE_SERVICE_ROLE_KEY` in `.env`')
+  // NUXT_SUPABASE_SECRET_KEY, else NUXT_SUPABASE_SERVICE_ROLE_KEY or the
+  // `secretKey` option (see the runtime config set up in module.ts).
+  const secretKey = configuredSecretKey || serviceRoleKey
+  if (!secretKey) {
+    throw new Error('Missing `NUXT_SUPABASE_SECRET_KEY` in the environment (or `secretKey` in the module options)')
   }
 
   let supabaseClient = event.context._supabaseServiceRole as SupabaseClient<T>
@@ -31,7 +33,7 @@ export const supabaseServiceRole = async <T>(serverEvent: ServerEvent): Promise<
   if (!supabaseClient) {
     supabaseClient = createTypedClient(
       url,
-      serviceRoleKey,
+      secretKey,
       {
         auth: {
           persistSession: false,

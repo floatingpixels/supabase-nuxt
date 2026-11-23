@@ -26,12 +26,12 @@ describe('runtime', () => {
     )
   })
 
-  it('reads serviceRoleKey from .env', () => {
+  it('reads secretKey from .env', () => {
     const config = useRuntimeConfig().supabase
-    const { serviceRoleKey } = config
+    const { secretKey } = config
     expect(config).toBeDefined()
-    expect(serviceRoleKey).toBeDefined()
-    expect(serviceRoleKey).toBe(
+    expect(secretKey).toBeDefined()
+    expect(secretKey).toBe(
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU',
     )
   })
