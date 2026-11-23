@@ -42,7 +42,8 @@ vi.mock('@supabase/ssr', () => ({
   createServerClient,
 }))
 
-vi.mock('@supabase/supabase-js', () => ({
+vi.mock('@supabase/supabase-js', async importOriginal => ({
+  isAuthError: (await importOriginal<typeof import('@supabase/supabase-js')>()).isAuthError,
   createClient,
 }))
 
@@ -64,6 +65,13 @@ vi.mock('#supabase/server', () => ({
   supabaseServerClient,
 }))
 
+// The OAuth callback takes the client from here, to start its exchange before
+// the session load settles; hand it the same stub as `#supabase/server`.
+vi.mock('../../src/runtime/server/services/supabaseServerClient', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../src/runtime/server/services/supabaseServerClient')>()),
+  requestClient: async (event: H3Event) => ({ client: await supabaseServerClient(event), sessionLoaded: Promise.resolve() }),
+}))
+
 describe('server runtime', () => {
   beforeEach(() => {
     vi.resetModules()
@@ -76,7 +84,8 @@ describe('server runtime', () => {
   })
 
   it('memoizes the request-scoped supabase server client and forwards cookie helpers', async () => {
-    const client = { kind: 'server-client' }
+    const getSession = vi.fn(async () => ({ data: { session: null }, error: null }))
+    const client = { kind: 'server-client', auth: { getSession } }
     const event = { context: {} } as unknown as EventWithContext
     useRuntimeConfig.mockReturnValue({
       public: {
@@ -104,6 +113,9 @@ describe('server runtime', () => {
     expect(second).toBe(client)
     expect(useRuntimeConfig).toHaveBeenCalledWith(event)
     expect(createServerClient).toHaveBeenCalledTimes(1)
+    // The session is loaded once, so a near-expiry refresh is persisted while
+    // the response is still open.
+    expect(getSession).toHaveBeenCalledTimes(1)
 
     const options = createServerClient.mock.calls[0]![2]
     expect(options.auth).toEqual({ persistSession: false })

@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+
+- A session close to expiry is now refreshed and its cookies written before `supabaseServerClient()` resolves, so before the server plugin hands out the client. Creating the client already starts a refresh in the background (auth-js emits `INITIAL_SESSION` to the `onAuthStateChange` subscribers that supabase-js and `@supabase/ssr` register). On requests where nothing awaited a session call, that refresh finished after the response was sent. The server logged an unhandled rejection ("Supabase auth cookies … could not be persisted because the response was already sent"), and the browser kept the superseded cookies. Affected were SSR pages that made no Supabase call (with the redirect middleware on, typically the login page, which it skips) and server routes that only created the client.
+  - The client now loads the session once per request (`getSession()`), joining that refresh. A fresh or absent session costs no network call.
+  - A rejected refresh token leaves the request signed out, as before, also under `throwOnError`.
+  - `supabaseServerClient()` now rejects when the refresh's cookies cannot be written, for example when the client is first created after the response was sent. Before, the first query on that client failed the same way.
+  - While Supabase Auth is unreachable, a request whose session needs refreshing now waits for auth-js's retries (up to about 30 seconds) even on pages that make no Supabase call. Pages that query Supabase or check the user already waited that long.
+  - `/auth/callback` starts the code exchange before it awaits that session load. Otherwise a browser still holding a session with a dead refresh token would lose the PKCE code verifier to the sign-out, and the first sign-in attempt would fail with "PKCE code verifier not found".
+
+### Dependencies
+
+- `@supabase/supabase-js` ^2.119.2.
+
 ## 0.8.0
 
 ### Fixes

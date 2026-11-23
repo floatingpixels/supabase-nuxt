@@ -10,7 +10,9 @@ export default defineNuxtConfig({
     redirect: true,
     redirectOptions: {
       login: '/sign-in',
-      exclude: ['/service'],
+      // `/public` stands for any page that makes no session call during SSR
+      // (see test/playwright/session-refresh.test.ts).
+      exclude: ['/service', '/public'],
     },
   },
   experimental: {

@@ -1,6 +1,6 @@
 import type { H3Error } from 'h3'
 import { defineEventHandler, getQuery } from 'h3'
-import { supabaseServerClient } from '#supabase/server'
+import { requestClient } from '../services/supabaseServerClient'
 import { failAuthFlow, redirectAfterAuth, requestHosts } from './flow'
 import { authErrorCode, firstQueryValue, getRedirectTarget, setAuthNoStoreHeaders } from './redirect'
 
@@ -29,10 +29,18 @@ export default defineEventHandler(async event => {
   // With auth-js's `experimental.appendPkceFlowIdToRedirects`, the callback
   // URL names the PKCE flow whose verifier must be used for this code.
   const flowId = firstQueryValue(query.sb_flow_id)
-  const supabase = await supabaseServerClient(event)
-  const { error } = typeof flowId === 'string' && flowId
-    ? await supabase.auth.exchangeCodeForSession(code, { flowId })
-    : await supabase.auth.exchangeCodeForSession(code)
+
+  // Start the exchange before awaiting the session load that creating the
+  // client starts. If the browser still holds a session whose refresh token
+  // is dead, that load signs it out, and signing out deletes every PKCE code
+  // verifier, including the one this exchange needs. The exchange reads its
+  // verifier as soon as it starts, well before the refresh request can come
+  // back. Both are awaited, so every cookie write lands before the redirect.
+  const { client: supabase, sessionLoaded } = await requestClient(event)
+  const exchange = typeof flowId === 'string' && flowId
+    ? supabase.auth.exchangeCodeForSession(code, { flowId })
+    : supabase.auth.exchangeCodeForSession(code)
+  const [{ error }] = await Promise.all([exchange, sessionLoaded])
 
   if (error) {
     // AuthError carries the HTTP status GoTrue answered with; an expired or

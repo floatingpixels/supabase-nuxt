@@ -94,7 +94,7 @@ describe('server cookie adapter', () => {
         },
       },
     })
-    createServerClient.mockReturnValue({ kind: 'server-client' })
+    createServerClient.mockReturnValue({ kind: 'server-client', auth: { getSession: async () => ({ data: { session: null }, error: null }) } })
   })
 
   it('writes every cookie chunk and every cache-prevention header on a writable response', async () => {

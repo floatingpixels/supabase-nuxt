@@ -15,6 +15,11 @@ vi.mock('#imports', () => ({ useRuntimeConfig }))
 vi.mock('#supabase/server', () => ({
   supabaseServerClient: vi.fn(async () => ({ auth: { verifyOtp, exchangeCodeForSession } })),
 }))
+// The OAuth callback takes the client from here, to start its exchange before
+// the session load settles.
+vi.mock('../../src/runtime/server/services/supabaseServerClient', () => ({
+  requestClient: vi.fn(async () => ({ client: { auth: { verifyOtp, exchangeCodeForSession } }, sessionLoaded: Promise.resolve() })),
+}))
 
 const withRedirectOptions = (redirectOptions: Record<string, unknown>, baseURL = '/') => {
   useRuntimeConfig.mockReturnValue({

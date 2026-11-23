@@ -20,6 +20,13 @@ vi.mock('#supabase/server', () => ({
   supabaseServerClient,
 }))
 
+// The OAuth callback takes the client from here, to start its exchange before
+// the session load settles; hand it the same stub as `#supabase/server`.
+vi.mock('../../src/runtime/server/services/supabaseServerClient', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../src/runtime/server/services/supabaseServerClient')>()),
+  requestClient: async (event: H3Event) => ({ client: await supabaseServerClient(event), sessionLoaded: Promise.resolve() }),
+}))
+
 const SESSION_COOKIES = [
   { name: 'sb-api-auth-token.0', value: 'base64-chunk-zero', options: { path: '/' } },
   { name: 'sb-api-auth-token.1', value: 'chunk-one', options: { path: '/' } },
@@ -88,7 +95,7 @@ describe('auth flows when session cookies cannot be persisted', () => {
         },
       },
     })
-    createServerClient.mockReturnValue({ kind: 'server-client' })
+    createServerClient.mockReturnValue({ kind: 'server-client', auth: { getSession: async () => ({ data: { session: null }, error: null }) } })
   })
 
   it('does not redirect the OAuth callback as authenticated', async () => {
