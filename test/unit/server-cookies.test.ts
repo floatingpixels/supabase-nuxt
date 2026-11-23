@@ -16,8 +16,8 @@ vi.mock('@supabase/ssr', () => ({
 }))
 
 // The cache-prevention headers @supabase/ssr passes to setAll alongside auth
-// cookies. Hard-coded rather than imported so that a change in the library
-// surfaces here as a failure instead of silently redefining the assertion.
+// cookies, as input for the adapter. ssr is mocked here; whether the real
+// library still sends exactly these is checked in server-session-refresh.
 const SSR_HEADERS = {
   'Cache-Control': 'private, no-cache, no-store, must-revalidate, max-age=0',
   'Expires': '0',
@@ -113,6 +113,12 @@ describe('server cookie adapter', () => {
     for (const [name, value] of Object.entries(SSR_HEADERS)) {
       expect(getResponseHeader(event, name)).toBe(value)
     }
+  })
+
+  it('declares both setAll parameters, so a check on its arity sees the headers one', async () => {
+    const { event } = createTestEvent()
+    const cookies = await cookieAdapterFor(event)
+    expect(cookies.setAll.length).toBe(2)
   })
 
   it('reads request cookies through getAll', async () => {

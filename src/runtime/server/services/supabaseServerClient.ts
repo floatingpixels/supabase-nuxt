@@ -48,7 +48,10 @@ const serverCookieMethods = (event: H3Event): ServerCookieMethods => ({
     return Object.entries(parseCookies(event)).map(([name, value]) => ({ name, value }))
   },
 
-  setAll: (cookiesToSet: CookieToSet[], headers: Record<string, string> = {}) => {
+  // No default value for `headers`: it would drop the parameter from
+  // `setAll.length`, which @supabase/ssr may check to tell adapters that
+  // accept the cache headers from ones that ignore them.
+  setAll: (cookiesToSet: CookieToSet[], headers?: Record<string, string>) => {
     const cookieNames = cookiesToSet.map(({ name }) => name).join(', ')
 
     // The response is already on the wire, so nothing can be added to it. The
@@ -68,7 +71,7 @@ const serverCookieMethods = (event: H3Event): ServerCookieMethods => ({
       })
       // Supabase supplies the no-store headers that keep a response carrying
       // session cookies out of shared caches; they are part of the same write.
-      setResponseHeaders(event, headers)
+      setResponseHeaders(event, headers ?? {})
     } catch (error) {
       throw new Error(
         `[supabase-nuxt] Supabase auth cookies (${cookieNames}) could not be written to the response.`,

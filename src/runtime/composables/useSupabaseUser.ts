@@ -1,3 +1,4 @@
+import { isAuthError } from '@supabase/supabase-js'
 import type { User, AuthError } from '@supabase/supabase-js'
 import { useSupabaseClient } from './useSupabaseClient'
 
@@ -49,10 +50,24 @@ const needsUserFallback = (claims: Record<string, unknown>) => {
   return !isRecord(claims.app_metadata) || !isRecord(claims.user_metadata) || typeof claims.email !== 'string'
 }
 
+/**
+ * auth-js returns auth errors as `{ error }`, unless the app set
+ * `auth.throwOnError`; this composable returns them either way, so the
+ * redirect middleware can send the user to the login page. Other errors, such
+ * as a token signed with an algorithm this auth-js cannot verify, still throw:
+ * reporting them as "signed out" would bounce a signed-in user to the login
+ * page without end.
+ */
+const returnedAuthError = <R>(call: Promise<R>): Promise<R | { data: null, error: AuthError }> =>
+  call.catch((error: unknown) => {
+    if (isAuthError(error)) return { data: null, error }
+    throw error
+  })
+
 export const useSupabaseUser = async (): Promise<{ data: SupabaseAuthUser | null, error: AuthError | null }> => {
   const supabase = useSupabaseClient()
 
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
+  const { data: claimsData, error: claimsError } = await returnedAuthError(supabase.auth.getClaims())
 
   if (claimsError) {
     return { data: null, error: claimsError }
@@ -67,7 +82,7 @@ export const useSupabaseUser = async (): Promise<{ data: SupabaseAuthUser | null
     return { data: normalizeUser({ claims }), error: null }
   }
 
-  const { data: userData, error: userError } = await supabase.auth.getUser()
+  const { data: userData, error: userError } = await returnedAuthError(supabase.auth.getUser())
 
   if (userError) {
     return { data: null, error: userError }

@@ -1,7 +1,7 @@
 import type { H3Error } from 'h3'
 import { defineEventHandler, getQuery } from 'h3'
 import { requestClient } from '../services/supabaseServerClient'
-import { failAuthFlow, redirectAfterAuth, requestHosts } from './flow'
+import { authCallError, failAuthFlow, redirectAfterAuth, requestHosts } from './flow'
 import { authErrorCode, firstQueryValue, getRedirectTarget, setAuthNoStoreHeaders } from './redirect'
 
 export default defineEventHandler(async event => {
@@ -35,12 +35,16 @@ export default defineEventHandler(async event => {
   // is dead, that load signs it out, and signing out deletes every PKCE code
   // verifier, including the one this exchange needs. The exchange reads its
   // verifier as soon as it starts, well before the refresh request can come
-  // back. Both are awaited, so every cookie write lands before the redirect.
+  // back. Both are awaited to the end, even when one of them fails, so every
+  // cookie write lands before the response, and a write that fails surfaces.
   const { client: supabase, sessionLoaded } = await requestClient(event)
-  const exchange = typeof flowId === 'string' && flowId
+  const exchange = authCallError(typeof flowId === 'string' && flowId
     ? supabase.auth.exchangeCodeForSession(code, { flowId })
-    : supabase.auth.exchangeCodeForSession(code)
-  const [{ error }] = await Promise.all([exchange, sessionLoaded])
+    : supabase.auth.exchangeCodeForSession(code))
+  const [exchanged, loaded] = await Promise.allSettled([exchange, sessionLoaded])
+  if (exchanged.status === 'rejected') throw exchanged.reason
+  if (loaded.status === 'rejected') throw loaded.reason
+  const error = exchanged.value
 
   if (error) {
     // AuthError carries the HTTP status GoTrue answered with; an expired or

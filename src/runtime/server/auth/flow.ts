@@ -1,4 +1,5 @@
-import type { EmailOtpType } from '@supabase/supabase-js'
+import { isAuthError } from '@supabase/supabase-js'
+import type { AuthError, EmailOtpType } from '@supabase/supabase-js'
 import type { H3Error, H3Event } from 'h3'
 import { createError, deleteCookie, getCookie, getRequestHost, getRequestProtocol, sendRedirect, setCookie } from 'h3'
 import { useRuntimeConfig } from '#imports'
@@ -6,6 +7,21 @@ import { supabaseServerClient } from '#supabase/server'
 import { authErrorCode, firstQueryValue, getRedirectTarget, withQuery } from './redirect'
 
 const EMAIL_OTP_TYPES = new Set<string>(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'])
+
+/**
+ * The error an auth call failed with. auth-js returns it as `{ error }`, unless
+ * the app set `auth.throwOnError`, in which case it throws it; the auth routes
+ * handle both alike (an `authError` page redirect, or a 4xx). Anything that is
+ * not an auth error, such as a failed cookie write, still throws.
+ */
+export const authCallError = async (call: Promise<{ error: AuthError | null }>): Promise<AuthError | null> => {
+  try {
+    return (await call).error
+  } catch (error) {
+    if (isAuthError(error)) return error
+    throw error
+  }
+}
 
 export const isEmailOtpType = (value: unknown): value is EmailOtpType =>
   typeof value === 'string' && EMAIL_OTP_TYPES.has(value)
@@ -154,7 +170,7 @@ export const takeParkedEmailLink = (event: H3Event) => {
 /** Verifies an email link's token hash and redirects to `redirectTo`. */
 export const verifyEmailLink = async (event: H3Event, { token_hash, type, redirectTo }: EmailLink) => {
   const supabase = await supabaseServerClient(event)
-  const { error } = await supabase.auth.verifyOtp({ type, token_hash })
+  const error = await authCallError(supabase.auth.verifyOtp({ type, token_hash }))
 
   if (error) {
     // AuthError carries the HTTP status GoTrue answered with; an expired or

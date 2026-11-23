@@ -108,6 +108,7 @@ export interface ModuleOptions {
         flowType: 'pkce',
         detectSessionInUrl: true,
         persistSession: true,
+        autoRefreshToken: true,
       },
     }
    * @type object

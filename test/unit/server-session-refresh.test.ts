@@ -3,6 +3,7 @@ import { Socket } from 'node:net'
 import { createEvent, getResponseHeader } from 'h3'
 import type { H3Event } from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { setAuthNoStoreHeaders } from '../../src/runtime/server/auth/redirect'
 
 // Unlike the other server tests, this one runs the real @supabase/ssr and
 // auth-js: the bug it guards against lives in the interplay between the
@@ -142,7 +143,13 @@ describe('server client session refresh', () => {
     const written = setCookieHeader(event).join('\n')
     expect(written).toContain(`${STORAGE_KEY}=`)
     expect(written).not.toContain('stale-refresh')
-    expect(getResponseHeader(event, 'cache-control')).toContain('no-store')
+    // The headers @supabase/ssr hands to setAll, which the module's own auth
+    // routes set themselves: they must stay identical.
+    const { event: reference } = createTestEvent()
+    setAuthNoStoreHeaders(reference)
+    for (const name of ['cache-control', 'expires', 'pragma']) {
+      expect(getResponseHeader(event, name), name).toBe(getResponseHeader(reference, name))
+    }
 
     // A page that awaits nothing sends its response straight away. Nothing may
     // still be pending that would try to write cookies after that.

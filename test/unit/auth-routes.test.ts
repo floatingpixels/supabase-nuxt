@@ -1,6 +1,7 @@
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
 import { createEvent } from 'h3'
+import { AuthApiError } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // The built-in auth routes over real h3 events: `next` alias, error page
@@ -157,6 +158,14 @@ describe('/auth/confirm', () => {
       expect(result.res.getHeader('cache-control')).toContain('no-store')
     })
 
+    it('redirects a verification error thrown under auth.throwOnError the same way', async () => {
+      verifyOtp.mockRejectedValueOnce(new AuthApiError('Email link is invalid or has expired', 403, 'otp_expired'))
+
+      const result = await run(await handlers.confirm(), '/auth/confirm?token_hash=hash&type=email&redirect_to=/a')
+
+      expect(result).toMatchObject({ status: 302, location: '/login?error=otp_expired&redirect_to=%2Fa' })
+    })
+
     it('falls back to a generic code for missing or unusual Supabase codes', async () => {
       verifyOtp.mockResolvedValueOnce({ error: { message: 'boom', status: 500 } })
       verifyOtp.mockResolvedValueOnce({ error: { message: 'boom', status: 400, code: 'Not A Code<script>' } })
@@ -311,8 +320,30 @@ describe('/auth/callback', () => {
     expect(await run(callback, '/auth/callback?code=c1&next=/dashboard')).toMatchObject({ status: 302, location: '/dashboard' })
     expect(exchangeCodeForSession).toHaveBeenLastCalledWith('c1')
 
-    await run(callback, '/auth/callback?code=c2&sb_flow_id=flow-1')
-    expect(exchangeCodeForSession).toHaveBeenLastCalledWith('c2', { flowId: 'flow-1' })
+    // auth-js accepts 8–64 characters of [A-Za-z0-9_-] as a flow id.
+    await run(callback, '/auth/callback?code=c2&sb_flow_id=3f9a1c0e7b2d4e6f8a1b3c5d7e9f0a2b')
+    expect(exchangeCodeForSession).toHaveBeenLastCalledWith('c2', { flowId: '3f9a1c0e7b2d4e6f8a1b3c5d7e9f0a2b' })
+  })
+
+  it('waits for the session load to finish even when the exchange fails', async () => {
+    const { requestClient } = await import('../../src/runtime/server/services/supabaseServerClient')
+    let finishLoad!: () => void
+    const sessionLoaded = new Promise<void>(resolve => (finishLoad = resolve))
+    vi.mocked(requestClient).mockResolvedValueOnce({
+      client: { auth: { exchangeCodeForSession: vi.fn().mockRejectedValue(new Error('cookie write failed')) } } as never,
+      sessionLoaded,
+    })
+
+    const { event } = createTestEvent('/auth/callback?code=c1')
+    let settled = false
+    const handled = (await handlers.callback())(event).finally(() => (settled = true))
+    await new Promise(resolve => setTimeout(resolve, 10))
+    // The load may still write cookies (a refresh or sign-out); the response
+    // must not go out before it has.
+    expect(settled).toBe(false)
+
+    finishLoad()
+    await expect(handled).rejects.toThrow('cookie write failed')
   })
 
   it('throws for provider errors by default', async () => {
@@ -336,6 +367,14 @@ describe('/auth/callback', () => {
 
     it('redirects a failed code exchange', async () => {
       exchangeCodeForSession.mockResolvedValueOnce({ error: { message: 'invalid flow state', status: 404, code: 'flow_state_not_found' } })
+
+      const result = await run(await handlers.callback(), '/auth/callback?code=c1')
+
+      expect(result).toMatchObject({ status: 302, location: '/login?error=flow_state_not_found&redirect_to=%2F' })
+    })
+
+    it('redirects an exchange error thrown under auth.throwOnError the same way', async () => {
+      exchangeCodeForSession.mockRejectedValueOnce(new AuthApiError('invalid flow state', 404, 'flow_state_not_found'))
 
       const result = await run(await handlers.callback(), '/auth/callback?code=c1')
 
